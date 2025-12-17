@@ -2,20 +2,19 @@ package utils
 
 import (
 	"errors"
+	"klubRanks/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const secretKey = "dummysecret"
-
 func GenerateToken(username string, userId int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
 		"userId":   userId,
-		"exp":      time.Now().Add(time.Hour * 2).Unix(),
+		"exp":      time.Now().Add(config.AppConfig.JWT.Expiry).Unix(),
 	})
-	return token.SignedString([]byte(secretKey))
+	return token.SignedString([]byte(config.AppConfig.JWT.Secret))
 }
 
 func VerifyToken(token string) (int64, error) {
@@ -24,7 +23,7 @@ func VerifyToken(token string) (int64, error) {
 		if !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return []byte(secretKey), nil
+		return []byte(config.AppConfig.JWT.Secret), nil
 	})
 
 	if err != nil {

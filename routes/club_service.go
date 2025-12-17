@@ -78,13 +78,22 @@ func GetMyClubs(c *gin.Context) {
 
 	resp := make([]dto.ClubResponse, 0, len(clubs))
 	for _, club := range clubs {
+		numberOfMembers, err := models.GetMemberCountForClub(club.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+
 		resp = append(resp, dto.ClubResponse{
-			ID:          club.ID,
-			Name:        club.Name,
-			Description: club.Description,
-			IsPrivate:   club.IsPrivate,
-			CreatedBy:   club.CreatedBy,
-			CreatedAt:   club.CreatedAt,
+			ID:              club.ID,
+			Name:            club.Name,
+			Description:     club.Description,
+			IsPrivate:       club.IsPrivate,
+			NumberOfMembers: int(numberOfMembers),
+			CreatedBy:       club.CreatedBy,
+			CreatedAt:       club.CreatedAt,
 		})
 	}
 
@@ -98,7 +107,6 @@ func GetMyClubs(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param clubId path int true "Club ID"
-// @Param member body dto.AddMemberRequest true "Member info"
 // @Success 200 {object} dto.MessageResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
@@ -110,13 +118,10 @@ func AddMember(c *gin.Context) {
 		return
 	}
 
-	var req dto.AddMemberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid request body"})
-		return
-	}
+	userID := c.GetInt64("userId")
+	role := "member"
 
-	if err := models.AddMember(int(req.UserID), clubID, req.Role); err != nil {
+	if err := models.AddMember(int(userID), clubID, role); err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
 	}

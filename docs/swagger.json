@@ -6,7 +6,6 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/clubs": {
@@ -366,15 +365,6 @@
                         "name": "clubId",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Member info",
-                        "name": "member",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AddMemberRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -612,25 +602,6 @@
         }
     },
     "definitions": {
-        "dto.AddMemberRequest": {
-            "type": "object",
-            "required": [
-                "role",
-                "user_id"
-            ],
-            "properties": {
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "member"
-                    ]
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "dto.ClubMessageResponse": {
             "type": "object",
             "properties": {
@@ -671,6 +642,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "number_of_members": {
+                    "type": "integer"
                 }
             }
         },

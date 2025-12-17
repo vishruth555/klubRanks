@@ -1,18 +1,5 @@
 basePath: /
 definitions:
-  dto.AddMemberRequest:
-    properties:
-      role:
-        enum:
-        - admin
-        - member
-        type: string
-      user_id:
-        type: integer
-    required:
-    - role
-    - user_id
-    type: object
   dto.ClubMessageResponse:
     properties:
       club_id:
@@ -40,6 +27,8 @@ definitions:
         type: boolean
       name:
         type: string
+      number_of_members:
+        type: integer
     type: object
   dto.CreateClubRequest:
     properties:
@@ -145,7 +134,6 @@ definitions:
     required:
     - delta
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: API for KlubRanks leaderboard system
@@ -373,12 +361,6 @@ paths:
         name: clubId
         required: true
         type: integer
-      - description: Member info
-        in: body
-        name: member
-        required: true
-        schema:
-          $ref: '#/definitions/dto.AddMemberRequest'
       produces:
       - application/json
       responses:

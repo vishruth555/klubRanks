@@ -141,7 +141,7 @@ func GetClubsForUser(userID int64) ([]Club, error) {
 	FROM clubs c
 	INNER JOIN members m ON m.clubid = c.id
 	WHERE m.userid = ?
-	ORDER BY c.created_at DESC
+	ORDER BY c.created_at ASC
 	`
 
 	rows, err := db.DB.Query(query, userID)
@@ -169,6 +169,22 @@ func GetClubsForUser(userID int64) ([]Club, error) {
 	}
 
 	return clubs, nil
+}
+
+func GetMemberCountForClub(clubID int64) (int64, error) {
+	query := `
+	SELECT COUNT(*) 
+	FROM members
+	WHERE clubid = ?
+	`
+
+	var count int64
+	err := db.DB.QueryRow(query, clubID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func RemoveMember(userID, clubID int) error {

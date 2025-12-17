@@ -372,15 +372,6 @@ const docTemplate = `{
                         "name": "clubId",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Member info",
-                        "name": "member",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AddMemberRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -618,25 +609,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.AddMemberRequest": {
-            "type": "object",
-            "required": [
-                "role",
-                "user_id"
-            ],
-            "properties": {
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "member"
-                    ]
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "dto.ClubMessageResponse": {
             "type": "object",
             "properties": {
@@ -677,6 +649,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "number_of_members": {
+                    "type": "integer"
                 }
             }
         },
@@ -850,7 +825,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "KlubRanks API",

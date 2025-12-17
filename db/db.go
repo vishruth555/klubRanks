@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"klubRanks/config"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -10,7 +11,7 @@ var DB *sql.DB
 
 func InitDB() {
 	var err error
-	DB, err = sql.Open("sqlite3", "api.db")
+	DB, err = sql.Open(config.AppConfig.Database.Driver, config.AppConfig.Database.DSN)
 
 	if err != nil {
 		panic("Could not connect to db")
@@ -80,6 +81,8 @@ func createTables() {
     score INTEGER NOT NULL DEFAULT 0,
 	highscore INTEGER NOT NULL DEFAULT 0,
     last_checkedin DATETIME,
+	current_streak INTEGER NOT NULL DEFAULT 0,
+	longest_streak INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (clubid) REFERENCES clubs(id) ON DELETE CASCADE,
     UNIQUE(userid, clubid)
@@ -122,9 +125,6 @@ func createTables() {
 	if err != nil {
 		panic("could not create streaks table")
 	}
-
-
-
 
 	//TODO remove this
 	// createEventsTable := `

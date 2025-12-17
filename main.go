@@ -1,6 +1,7 @@
 package main
 
 import (
+	"klubRanks/config"
 	"klubRanks/db"
 	"klubRanks/routes"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 // @title KlubRanks API
 // @version 1.0
 // @description API for KlubRanks leaderboard system
-// @host localhost:8080
 // @BasePath /
 
 // @securityDefinitions.apikey BearerAuth
@@ -30,13 +30,17 @@ func main() {
 	server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	server.GET("/ping", ping)
+	server.GET("/health", health)
 
 	routes.RegisterRoutes(server)
 
-	server.Run(":8080")
+	server.Run(":" + config.AppConfig.Server.Port)
 
 }
 
 func ping(context *gin.Context) {
 	context.JSON(http.StatusTeapot, gin.H{"message": "pong"})
+}
+func health(context *gin.Context) {
+	context.JSON(http.StatusOK, gin.H{"status": "healthy"})
 }
