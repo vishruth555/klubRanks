@@ -32,14 +32,14 @@ func RegisterRoutes(server *gin.Engine) {
 		clubs.GET("/", GetMyClubs)
 		clubs.GET("/:clubId/members", GetClubMembers)
 		clubs.POST("/:clubId/members", AddMember)
+		clubs.GET("/:clubId/stats/me", GetCurrentUserStats)
+		clubs.GET("/:clubId/stats/:userId", GetUserStats)
 	}
 
 	leaderboard := auth.Group("/clubs/:clubId/leaderboard")
 	{
 		leaderboard.GET("", GetLeaderboard)
-		leaderboard.POST("/join", AddUserToLeaderboard)
-		leaderboard.PATCH("/score", UpdateLeaderboardScore)
-		leaderboard.PUT("/score", SetLeaderboardScore)
+		leaderboard.POST("/score", UpdateLeaderboardScore)
 	}
 
 	messages := auth.Group("/clubs/:clubId/messages")

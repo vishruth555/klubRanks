@@ -29,8 +29,21 @@ type ClubResponse struct {
 }
 
 type MemberResponse struct {
-	ID       int64     `json:"id"`
-	UserID   int64     `json:"user_id"`
+	User     User      `json:"user"`
 	Role     string    `json:"role"`
 	JoinedAt time.Time `json:"joined_at"`
+}
+
+type UserStatsDTO struct {
+	UserID   int64  `json:"user_id"`
+	Username string `json:"username"`
+	AvatarID string `json:"avatar_id,omitempty"`
+
+	Score int `json:"score"`
+
+	CurrentStreak int `json:"current_streak"`
+	LongestStreak int `json:"longest_streak"`
+
+	LastCheckedIn *time.Time `json:"last_checkedin,omitempty"`
+	Rank          int        `json:"rank"`
 }

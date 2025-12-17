@@ -24,3 +24,9 @@ type LoginResponse struct {
 	Message string `json:"message" example:"login successful"`
 	Token   string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
+
+type User struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	AvatarID string `json:"avatar_id"`
+}

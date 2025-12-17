@@ -2,6 +2,7 @@ package routes
 
 import (
 	"klubRanks/dto"
+	"klubRanks/logger"
 	"klubRanks/models"
 	"net/http"
 	"strconv"
@@ -46,13 +47,20 @@ func CreateClub(c *gin.Context) {
 		return
 	}
 
+	logger.LogInfo("Club created with ID:", club.ID)
+	if err := models.AddUserToLeaderboard(club.CreatedBy, club.ID); err != nil {
+		logger.LogError("Failed to add user to leaderboard:", err)
+		return
+	}
+
 	c.JSON(http.StatusCreated, dto.ClubResponse{
-		ID:          club.ID,
-		Name:        club.Name,
-		Description: club.Description,
-		IsPrivate:   club.IsPrivate,
-		CreatedBy:   club.CreatedBy,
-		CreatedAt:   club.CreatedAt,
+		ID:              club.ID,
+		Name:            club.Name,
+		Description:     club.Description,
+		IsPrivate:       club.IsPrivate,
+		NumberOfMembers: 1,
+		CreatedBy:       club.CreatedBy,
+		CreatedAt:       club.CreatedAt,
 	})
 }
 
@@ -112,7 +120,7 @@ func GetMyClubs(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/members [post]
 func AddMember(c *gin.Context) {
-	clubID, err := strconv.Atoi(c.Param("clubId"))
+	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
 		return
@@ -121,10 +129,11 @@ func AddMember(c *gin.Context) {
 	userID := c.GetInt64("userId")
 	role := "member"
 
-	if err := models.AddMember(int(userID), clubID, role); err != nil {
+	if err := models.AddMember(userID, clubID, role); err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
+	logger.LogInfo("User", userID, "added to club", clubID)
 
 	c.JSON(http.StatusOK, dto.MessageResponse{
 		Message: "member added successfully",
@@ -151,13 +160,101 @@ func GetClubMembers(c *gin.Context) {
 
 	resp := make([]dto.MemberResponse, 0, len(members))
 	for _, m := range members {
+		user, err := models.GetUserByID(m.UserID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+			return
+		}
 		resp = append(resp, dto.MemberResponse{
-			ID:       m.ID,
-			UserID:   m.UserID,
+			User: dto.User{
+				ID:       user.ID,
+				Username: user.Username,
+				AvatarID: user.AvatarID,
+			},
 			Role:     m.Role,
 			JoinedAt: m.JoinedAt,
 		})
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+// GetClubMembers godoc
+// @Summary Get club user stats for current user
+// @Tags Clubs
+// @Security BearerAuth
+// @Produce json
+// @Param clubId path int true "Club ID"
+// @Success 200 {array} dto.UserStatsDTO
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /clubs/{clubId}/stats/me [get]
+func GetCurrentUserStats(c *gin.Context) {
+	clubID, _ := strconv.ParseInt(c.Param("clubId"), 10, 64)
+
+	userID := c.GetInt64("userId")
+
+	userStats, err := getClubUserStats(userID, clubID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, userStats)
+}
+
+// GetClubMembers godoc
+// @Summary Get club user stats with id
+// @Tags Clubs
+// @Security BearerAuth
+// @Produce json
+// @Param clubId path int true "Club ID"
+// @Param userId path int true "User ID"
+// @Success 200 {array} dto.UserStatsDTO
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /clubs/{clubId}/stats/{userId} [get]
+func GetUserStats(c *gin.Context) {
+	clubID, _ := strconv.ParseInt(c.Param("clubId"), 10, 64)
+
+	userID, _ := strconv.ParseInt(c.Param("userId"), 10, 64)
+
+	userStats, err := getClubUserStats(userID, clubID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, userStats)
+}
+
+func getClubUserStats(userID int64, clubID int64) (dto.UserStatsDTO, error) {
+
+	var userStats dto.UserStatsDTO
+	user, err := models.GetUserByID(userID)
+	if err != nil {
+		return userStats, err
+	}
+
+	logger.LogInfo("Fetching stats for user: ", userID, "in club: ", clubID)
+
+	stats, err := models.GetLeaderboardEntryForUser(userID, clubID)
+	if err != nil {
+		return userStats, err
+	}
+	logger.LogDebug("Leaderboard stats: ", stats)
+	rank, err := models.GetUserRankInClub(userID, clubID)
+	if err != nil {
+		return userStats, err
+	}
+
+	userStats = dto.UserStatsDTO{
+		UserID:        user.ID,
+		Username:      user.Username,
+		AvatarID:      user.AvatarID,
+		Score:         stats.Score,
+		CurrentStreak: stats.CurrentStreak,
+		LongestStreak: stats.LongestStreak,
+		LastCheckedIn: stats.LastCheckedIn,
+		Rank:          rank,
+	}
+	return userStats, nil
 }

@@ -79,7 +79,6 @@ func createTables() {
     userid INTEGER NOT NULL,
     clubid INTEGER NOT NULL,
     score INTEGER NOT NULL DEFAULT 0,
-	highscore INTEGER NOT NULL DEFAULT 0,
     last_checkedin DATETIME,
 	current_streak INTEGER NOT NULL DEFAULT 0,
 	longest_streak INTEGER NOT NULL DEFAULT 0,

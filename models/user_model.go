@@ -15,7 +15,7 @@ type User struct {
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 
-func GetUserByID(id int) (*User, error) {
+func GetUserByID(id int64) (*User, error) {
 	query := `
 	SELECT id, username, avatar_id, created_at
 	FROM users

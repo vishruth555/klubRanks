@@ -53,13 +53,8 @@ func SendMessage(c *gin.Context) {
 		})
 		return
 	}
-
-	c.JSON(http.StatusCreated, dto.ClubMessageResponse{
-		MessageID: msg.MessageID,
-		UserID:    msg.UserID,
-		ClubID:    msg.ClubID,
-		Message:   msg.Message,
-		Timestamp: msg.Timestamp,
+	c.JSON(http.StatusCreated, dto.MessageResponse{
+		Message: "message sent successfully",
 	})
 }
 
@@ -109,10 +104,19 @@ func GetClubMessages(c *gin.Context) {
 
 	resp := make([]dto.ClubMessageResponse, 0, len(messages))
 	for _, m := range messages {
+		user, err := models.GetUserByID(m.UserID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
 		resp = append(resp, dto.ClubMessageResponse{
-			MessageID: m.MessageID,
-			UserID:    m.UserID,
-			ClubID:    m.ClubID,
+			User: dto.User{
+				ID:       user.ID,
+				Username: user.Username,
+				AvatarID: user.AvatarID,
+			},
 			Message:   m.Message,
 			Timestamp: m.Timestamp,
 		})

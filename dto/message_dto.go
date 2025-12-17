@@ -11,9 +11,7 @@ type SendMessageRequest struct {
 /*************** RESPONSE DTOs ***************/
 
 type ClubMessageResponse struct {
-	MessageID int64     `json:"message_id"`
-	UserID    int64     `json:"user_id"`
-	ClubID    int64     `json:"club_id"`
+	User      User      `json:"user"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
 }

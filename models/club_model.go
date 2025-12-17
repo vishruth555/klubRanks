@@ -107,7 +107,7 @@ func (c *Club) Update() error {
 	return err
 }
 
-func AddMember(userID, clubID int, role string) error {
+func AddMember(userID, clubID int64, role string) error {
 	query := `
 	INSERT INTO members (userid, clubid, role, joined_at)
 	VALUES (?, ?, ?, ?)
@@ -125,6 +125,10 @@ func AddMember(userID, clubID int, role string) error {
 		role,
 		time.Now(),
 	)
+
+	if err := AddUserToLeaderboard(userID, clubID); err != nil {
+		return err
+	}
 
 	return err
 }

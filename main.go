@@ -3,6 +3,7 @@ package main
 import (
 	"klubRanks/config"
 	"klubRanks/db"
+	"klubRanks/logger"
 	"klubRanks/routes"
 	"net/http"
 
@@ -24,6 +25,7 @@ import (
 // @name Authorization
 // @description Type "Bearer {your JWT token}"
 func main() {
+	logger.LogInfo("Starting KlubRanks Service...")
 	db.InitDB()
 	server := gin.Default()
 

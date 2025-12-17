@@ -148,113 +148,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/clubs/{clubId}/leaderboard/join": {
+        "/clubs/{clubId}/leaderboard/score": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates leaderboard entry with score 0",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Leaderboard"
-                ],
-                "summary": "Add user to leaderboard",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Club ID",
-                        "name": "clubId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.MessageResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/clubs/{clubId}/leaderboard/score": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Set user's score directly (admin)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Leaderboard"
-                ],
-                "summary": "Set leaderboard score",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Club ID",
-                        "name": "clubId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Score value",
-                        "name": "score",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SetScoreRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.MessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Increment user's score",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -269,15 +170,6 @@ const docTemplate = `{
                         "name": "clubId",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Score delta",
-                        "name": "score",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateScoreRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -509,6 +401,97 @@ const docTemplate = `{
                 }
             }
         },
+        "/clubs/{clubId}/stats/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Clubs"
+                ],
+                "summary": "Get club user stats for current user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Club ID",
+                        "name": "clubId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.UserStatsDTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/clubs/{clubId}/stats/{userId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Clubs"
+                ],
+                "summary": "Get club user stats with id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Club ID",
+                        "name": "clubId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.UserStatsDTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Authenticate user and return JWT",
@@ -612,20 +595,14 @@ const docTemplate = `{
         "dto.ClubMessageResponse": {
             "type": "object",
             "properties": {
-                "club_id": {
-                    "type": "integer"
-                },
                 "message": {
                     "type": "string"
-                },
-                "message_id": {
-                    "type": "integer"
                 },
                 "timestamp": {
                     "type": "string"
                 },
-                "user_id": {
-                    "type": "integer"
+                "user": {
+                    "$ref": "#/definitions/dto.User"
                 }
             }
         },
@@ -684,7 +661,7 @@ const docTemplate = `{
         "dto.LeaderboardEntryResponse": {
             "type": "object",
             "properties": {
-                "club_id": {
+                "current_streak": {
                     "type": "integer"
                 },
                 "last_checkedin": {
@@ -693,8 +670,8 @@ const docTemplate = `{
                 "score": {
                     "type": "integer"
                 },
-                "user_id": {
-                    "type": "integer"
+                "user": {
+                    "$ref": "#/definitions/dto.User"
                 }
             }
         },
@@ -734,17 +711,14 @@ const docTemplate = `{
         "dto.MemberResponse": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "integer"
-                },
                 "joined_at": {
                     "type": "string"
                 },
                 "role": {
                     "type": "string"
                 },
-                "user_id": {
-                    "type": "integer"
+                "user": {
+                    "$ref": "#/definitions/dto.User"
                 }
             }
         },
@@ -765,17 +739,6 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.SetScoreRequest": {
-            "type": "object",
-            "required": [
-                "score"
-            ],
-            "properties": {
-                "score": {
-                    "type": "integer"
                 }
             }
         },
@@ -800,14 +763,46 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UpdateScoreRequest": {
+        "dto.User": {
             "type": "object",
-            "required": [
-                "delta"
-            ],
             "properties": {
-                "delta": {
+                "avatar_id": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserStatsDTO": {
+            "type": "object",
+            "properties": {
+                "avatar_id": {
+                    "type": "string"
+                },
+                "current_streak": {
+                    "type": "integer"
+                },
+                "last_checkedin": {
+                    "type": "string"
+                },
+                "longest_streak": {
+                    "type": "integer"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "score": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         }

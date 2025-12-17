@@ -9,7 +9,9 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string
+	Port    string
+	Log     string
+	Counter int
 	// ReadTimeout  time.Duration
 	// WriteTimeout time.Duration
 }
@@ -27,7 +29,9 @@ type JWTConfig struct {
 // Single exported config instance
 var AppConfig = Config{
 	Server: ServerConfig{
-		Port: "8080",
+		Port:    "8080",
+		Log:     "debug",
+		Counter: 1,
 		// ReadTimeout:  5 * time.Second,
 		// WriteTimeout: 10 * time.Second,
 	},
