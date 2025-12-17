@@ -13,6 +13,19 @@ definitions:
     - role
     - user_id
     type: object
+  dto.ClubMessageResponse:
+    properties:
+      club_id:
+        type: integer
+      message:
+        type: string
+      message_id:
+        type: integer
+      timestamp:
+        type: string
+      user_id:
+        type: integer
+    type: object
   dto.ClubResponse:
     properties:
       created_at:
@@ -44,6 +57,17 @@ definitions:
       error:
         example: could not parse data
         type: string
+    type: object
+  dto.LeaderboardEntryResponse:
+    properties:
+      club_id:
+        type: integer
+      last_checkedin:
+        type: string
+      score:
+        type: integer
+      user_id:
+        type: integer
     type: object
   dto.LoginRequest:
     properties:
@@ -85,6 +109,20 @@ definitions:
         example: user created successfully
         type: string
     type: object
+  dto.SendMessageRequest:
+    properties:
+      message:
+        type: string
+    required:
+    - message
+    type: object
+  dto.SetScoreRequest:
+    properties:
+      score:
+        type: integer
+    required:
+    - score
+    type: object
   dto.SignupRequest:
     properties:
       avatar_id:
@@ -99,6 +137,13 @@ definitions:
     - avatar_id
     - password
     - username
+    type: object
+  dto.UpdateScoreRequest:
+    properties:
+      delta:
+        type: integer
+    required:
+    - delta
     type: object
 host: localhost:8080
 info:
@@ -159,6 +204,140 @@ paths:
       summary: Create a new club
       tags:
       - Clubs
+  /clubs/{clubId}/leaderboard:
+    get:
+      description: Fetch top N users sorted by score
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      - default: 50
+        description: Result limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.LeaderboardEntryResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get club leaderboard
+      tags:
+      - Leaderboard
+  /clubs/{clubId}/leaderboard/join:
+    post:
+      description: Creates leaderboard entry with score 0
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add user to leaderboard
+      tags:
+      - Leaderboard
+  /clubs/{clubId}/leaderboard/score:
+    patch:
+      consumes:
+      - application/json
+      description: Increment user's score
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      - description: Score delta
+        in: body
+        name: score
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateScoreRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update leaderboard score
+      tags:
+      - Leaderboard
+    put:
+      consumes:
+      - application/json
+      description: Set user's score directly (admin)
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      - description: Score value
+        in: body
+        name: score
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetScoreRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set leaderboard score
+      tags:
+      - Leaderboard
   /clubs/{clubId}/members:
     get:
       parameters:
@@ -220,6 +399,79 @@ paths:
       summary: Add member to club
       tags:
       - Clubs
+  /clubs/{clubId}/messages:
+    get:
+      description: Fetch paginated messages for a club
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      - default: 50
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ClubMessageResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get club messages
+      tags:
+      - Messages
+    post:
+      consumes:
+      - application/json
+      description: Send a chat message inside a club
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      - description: Message payload
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ClubMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send message to club chat
+      tags:
+      - Messages
   /login:
     post:
       consumes:

@@ -34,4 +34,17 @@ func RegisterRoutes(server *gin.Engine) {
 		clubs.POST("/:clubId/members", AddMember)
 	}
 
+	leaderboard := auth.Group("/clubs/:clubId/leaderboard")
+	{
+		leaderboard.GET("", GetLeaderboard)
+		leaderboard.POST("/join", AddUserToLeaderboard)
+		leaderboard.PATCH("/score", UpdateLeaderboardScore)
+		leaderboard.PUT("/score", SetLeaderboardScore)
+	}
+
+	messages := auth.Group("/clubs/:clubId/messages")
+	{
+		messages.POST("", SendMessage)
+		messages.GET("", GetClubMessages)
+	}
 }
