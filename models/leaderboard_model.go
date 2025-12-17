@@ -11,6 +11,7 @@ type LeaderboardEntry struct {
 	UserID        int64      `db:"userid" json:"user_id"`
 	ClubID        int64      `db:"clubid" json:"club_id"`
 	Score         int        `db:"score" json:"score"`
+	Highscore     int        `db:"highscore" json:"high_score"`
 	LastCheckedIn *time.Time `db:"last_checkedin" json:"last_checkedin,omitempty"`
 }
 
