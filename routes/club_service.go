@@ -185,7 +185,7 @@ func GetClubMembers(c *gin.Context) {
 // @Security BearerAuth
 // @Produce json
 // @Param clubId path int true "Club ID"
-// @Success 200 {array} dto.UserStatsDTO
+// @Success 200 {array} dto.UserStats
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/stats/me [get]
 func GetCurrentUserStats(c *gin.Context) {
