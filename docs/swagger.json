@@ -423,7 +423,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.UserStatsDTO"
+                                "$ref": "#/definitions/dto.UserStats"
                             }
                         }
                     },
@@ -472,7 +472,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.UserStatsDTO"
+                                "$ref": "#/definitions/dto.UserStats"
                             }
                         }
                     },
@@ -770,7 +770,7 @@
                 }
             }
         },
-        "dto.UserStatsDTO": {
+        "dto.UserStats": {
             "type": "object",
             "properties": {
                 "avatar_id": {

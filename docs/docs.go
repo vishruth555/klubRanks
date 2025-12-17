@@ -430,7 +430,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.UserStatsDTO"
+                                "$ref": "#/definitions/dto.UserStats"
                             }
                         }
                     },
@@ -479,7 +479,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.UserStatsDTO"
+                                "$ref": "#/definitions/dto.UserStats"
                             }
                         }
                     },
@@ -777,7 +777,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UserStatsDTO": {
+        "dto.UserStats": {
             "type": "object",
             "properties": {
                 "avatar_id": {
