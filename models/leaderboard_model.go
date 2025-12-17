@@ -17,8 +17,8 @@ type LeaderboardEntry struct {
 
 func AddUserToLeaderboard(userID, clubID int64) error {
 	query := `
-	INSERT INTO leaderboard (userid, clubid, score, last_checkedin)
-	VALUES (?, ?, ?, ?)
+	INSERT INTO leaderboard (userid, clubid, score)
+	VALUES (?, ?, ?)
 	`
 
 	stmt, err := db.DB.Prepare(query)
@@ -31,7 +31,6 @@ func AddUserToLeaderboard(userID, clubID int64) error {
 		userID,
 		clubID,
 		0,
-		time.Now(),
 	)
 
 	return err
@@ -53,9 +52,25 @@ func updateStreaks(userID, clubID int64) error {
 	today := now.Truncate(24 * time.Hour)
 	yesterday := today.AddDate(0, 0, -1)
 
+	if lastCheckedIn == nil {
+		_, err = db.DB.Exec(`
+			UPDATE leaderboard
+			SET
+				current_streak = 1,
+				longest_streak = CASE
+					WHEN longest_streak < 1 THEN 1
+					ELSE longest_streak
+				END,
+				last_checkedin = ?
+			WHERE userid = ? AND clubid = ?
+		`, now, userID, clubID)
+		return err
+	}
+
 	lastDay := lastCheckedIn.Truncate(24 * time.Hour)
 
 	switch {
+
 	// Checked in yesterday → increment streak
 	case lastDay.Equal(yesterday):
 		_, err = db.DB.Exec(`
@@ -74,9 +89,13 @@ func updateStreaks(userID, clubID int64) error {
 	case lastDay.Before(yesterday):
 		_, err = db.DB.Exec(`
 			UPDATE leaderboard
-			SET current_streak = 1,
-			    longest_streak = GREATEST(longest_streak, 1),
-			    last_checkedin = ?
+			SET
+				current_streak = 1,
+				longest_streak = CASE
+					WHEN longest_streak < 1 THEN 1
+					ELSE longest_streak
+				END,
+				last_checkedin = ?
 			WHERE userid = ? AND clubid = ?
 		`, now, userID, clubID)
 
@@ -89,13 +108,18 @@ func updateStreaks(userID, clubID int64) error {
 }
 
 func UpdateLeaderboardScore(userID, clubID int64, delta int) error {
+	err := updateStreaks(userID, clubID)
+	if err != nil {
+		return err
+	}
+
 	query := `
 	UPDATE leaderboard
 	SET score = score + ?, last_checkedin = ?
 	WHERE userid = ? AND clubid = ?
 	`
 
-	_, err := db.DB.Exec(
+	_, err = db.DB.Exec(
 		query,
 		delta,
 		time.Now(),
@@ -107,14 +131,12 @@ func UpdateLeaderboardScore(userID, clubID int64, delta int) error {
 		return err
 	}
 
-	err = updateStreaks(userID, clubID)
-
 	return err
 }
 
 func GetLeaderboardForClub(clubID int64, limit int) ([]LeaderboardEntry, error) {
 	query := `
-	SELECT id, userid, clubid, score, last_checkedin
+	SELECT id, userid, clubid, score, last_checkedin, current_streak
 	FROM leaderboard
 	WHERE clubid = ?
 	ORDER BY score DESC, last_checkedin ASC
@@ -137,6 +159,7 @@ func GetLeaderboardForClub(clubID int64, limit int) ([]LeaderboardEntry, error) 
 			&e.ClubID,
 			&e.Score,
 			&e.LastCheckedIn,
+			&e.CurrentStreak,
 		)
 		if err != nil {
 			return nil, err

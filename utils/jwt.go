@@ -27,7 +27,7 @@ func VerifyToken(token string) (int64, error) {
 	})
 
 	if err != nil {
-		return 0, errors.New("could not parse token")
+		return 0, errors.New("token is expired or invalid")
 	}
 
 	isValid := parsedToken.Valid
