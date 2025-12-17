@@ -78,6 +78,7 @@ func createTables() {
     userid INTEGER NOT NULL,
     clubid INTEGER NOT NULL,
     score INTEGER NOT NULL DEFAULT 0,
+	highscore INTEGER NOT NULL DEFAULT 0,
     last_checkedin DATETIME,
     FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (clubid) REFERENCES clubs(id) ON DELETE CASCADE,
