@@ -34,7 +34,7 @@ type MemberResponse struct {
 	JoinedAt time.Time `json:"joined_at"`
 }
 
-type UserStatsDTO struct {
+type UserStats struct {
 	UserID   int64  `json:"user_id"`
 	Username string `json:"username"`
 	AvatarID string `json:"avatar_id,omitempty"`

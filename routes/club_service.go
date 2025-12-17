@@ -209,7 +209,7 @@ func GetCurrentUserStats(c *gin.Context) {
 // @Produce json
 // @Param clubId path int true "Club ID"
 // @Param userId path int true "User ID"
-// @Success 200 {array} dto.UserStatsDTO
+// @Success 200 {array} dto.UserStats
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/stats/{userId} [get]
 func GetUserStats(c *gin.Context) {
@@ -226,9 +226,9 @@ func GetUserStats(c *gin.Context) {
 	c.JSON(http.StatusOK, userStats)
 }
 
-func getClubUserStats(userID int64, clubID int64) (dto.UserStatsDTO, error) {
+func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
 
-	var userStats dto.UserStatsDTO
+	var userStats dto.UserStats
 	user, err := models.GetUserByID(userID)
 	if err != nil {
 		return userStats, err
@@ -246,7 +246,7 @@ func getClubUserStats(userID int64, clubID int64) (dto.UserStatsDTO, error) {
 		return userStats, err
 	}
 
-	userStats = dto.UserStatsDTO{
+	userStats = dto.UserStats{
 		UserID:        user.ID,
 		Username:      user.Username,
 		AvatarID:      user.AvatarID,
