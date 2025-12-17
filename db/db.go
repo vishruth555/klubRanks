@@ -105,6 +105,26 @@ func createTables() {
 		panic("could not create messages table")
 	}
 
+	createStreaksTable := `
+	CREATE TABLE IF NOT EXISTS streaks (
+    streakid INTEGER PRIMARY KEY AUTOINCREMENT,
+    clubid INTEGER NOT NULL,
+    userid INTEGER NOT NULL,
+    currentstreak INTEGER NOT NULL DEFAULT 0,
+	longeststreak INTEGER NOT NULL DEFAULT 0,
+	lastcheckedin DATETIME,
+    FOREIGN KEY (clubid) REFERENCES clubs(id) ON DELETE CASCADE,
+    FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
+	);
+	`
+	_, err = DB.Exec(createStreaksTable)
+	if err != nil {
+		panic("could not create streaks table")
+	}
+
+
+
+
 	//TODO remove this
 	// createEventsTable := `
 	// CREATE TABLE IF NOT EXISTS events (
