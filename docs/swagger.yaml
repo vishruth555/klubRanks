@@ -1,0 +1,293 @@
+basePath: /
+definitions:
+  dto.AddMemberRequest:
+    properties:
+      role:
+        enum:
+        - admin
+        - member
+        type: string
+      user_id:
+        type: integer
+    required:
+    - role
+    - user_id
+    type: object
+  dto.ClubResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      is_private:
+        type: boolean
+      name:
+        type: string
+    type: object
+  dto.CreateClubRequest:
+    properties:
+      description:
+        type: string
+      is_private:
+        type: boolean
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        example: could not parse data
+        type: string
+    type: object
+  dto.LoginRequest:
+    properties:
+      avatar_id:
+        type: string
+      password:
+        example: strongpassword
+        type: string
+      username:
+        example: john
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  dto.LoginResponse:
+    properties:
+      message:
+        example: login successful
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  dto.MemberResponse:
+    properties:
+      id:
+        type: integer
+      joined_at:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  dto.MessageResponse:
+    properties:
+      message:
+        example: user created successfully
+        type: string
+    type: object
+  dto.SignupRequest:
+    properties:
+      avatar_id:
+        type: string
+      password:
+        example: strongpassword
+        type: string
+      username:
+        example: john
+        type: string
+    required:
+    - avatar_id
+    - password
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for KlubRanks leaderboard system
+  title: KlubRanks API
+  version: "1.0"
+paths:
+  /clubs:
+    get:
+      description: Get all clubs the user is a member of
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ClubResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's clubs
+      tags:
+      - Clubs
+    post:
+      consumes:
+      - application/json
+      description: Create a club and add creator as admin
+      parameters:
+      - description: Create club payload
+        in: body
+        name: club
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateClubRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ClubResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new club
+      tags:
+      - Clubs
+  /clubs/{clubId}/members:
+    get:
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.MemberResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get club members
+      tags:
+      - Clubs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      - description: Member info
+        in: body
+        name: member
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add member to club
+      tags:
+      - Clubs
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT
+      parameters:
+      - description: User login payload
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User signup payload
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer {your JWT token}"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

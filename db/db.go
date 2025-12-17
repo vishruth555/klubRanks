@@ -28,8 +28,8 @@ func createTables() {
 	CREATE TABLE IF NOT EXISTS users (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	username TEXT NOT NULL UNIQUE,
-	password TEXT NOT NULL
-	avatar_id TEXT
+	password TEXT NOT NULL,
+	avatar_id TEXT,
 	created_at DATETIME NOT NULL
 	);
 	`
@@ -42,11 +42,11 @@ func createTables() {
 	createClubsTable := `
 	CREATE TABLE IF NOT EXISTS clubs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	created_by INTEGER
-	is_private BOOL
-	name TEXT NOT NULL
-	description TEXT
-	created_at DATETIME NOT NULL
+	created_by INTEGER,
+	is_private BOOL,
+	name TEXT NOT NULL,
+	description TEXT,
+	created_at DATETIME NOT NULL,
 	FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
 	);
 	`

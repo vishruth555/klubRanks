@@ -11,7 +11,7 @@ type User struct {
 	ID        int64     `db:"id" json:"id"`
 	Username  string    `db:"username" json:"username"`
 	Password  string    `db:"password" json:"-"`
-	AvatarID  *string   `db:"avatar_id" json:"avatar_id,omitempty"`
+	AvatarID  string    `db:"avatar_id" json:"avatar_id"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 

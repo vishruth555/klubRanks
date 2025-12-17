@@ -129,7 +129,7 @@ func AddMember(userID, clubID int, role string) error {
 	return err
 }
 
-func GetClubsForUser(userID int) ([]Club, error) {
+func GetClubsForUser(userID int64) ([]Club, error) {
 	query := `
 	SELECT 
 		c.id,
