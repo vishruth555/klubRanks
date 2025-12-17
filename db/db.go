@@ -107,7 +107,7 @@ func createTables() {
 
 	createStreaksTable := `
 	CREATE TABLE IF NOT EXISTS streaks (
-    streakid INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     clubid INTEGER NOT NULL,
     userid INTEGER NOT NULL,
     currentstreak INTEGER NOT NULL DEFAULT 0,
