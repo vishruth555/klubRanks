@@ -1,234 +1,117 @@
 package models
 
 import (
-	"klubRanks/db"
 	"time"
+
+	"klubRanks/db"
+
+	"gorm.io/gorm"
 )
 
 type Club struct {
-	ID          int64     `db:"id" json:"id"`
-	CreatedBy   int64     `db:"created_by" json:"created_by"`
-	IsPrivate   bool      `db:"is_private" json:"is_private"`
-	Name        string    `db:"name" json:"name"`
-	Description *string   `db:"description" json:"description,omitempty"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	CreatedBy   uint      `gorm:"not null" json:"created_by"`
+	IsPrivate   bool      `json:"is_private"`
+	Name        string    `gorm:"not null" json:"name"`
+	Description *string   `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+
+	Members []Member `gorm:"foreignKey:ClubID"`
 }
 
 type Member struct {
-	ID       int64     `db:"id" json:"id"`
-	UserID   int64     `db:"userid" json:"user_id"`
-	ClubID   int64     `db:"clubid" json:"club_id"`
-	Role     string    `db:"role" json:"role"`
-	JoinedAt time.Time `db:"joined_at" json:"joined_at"`
+	ID       uint      `gorm:"primaryKey" json:"id"`
+	UserID   uint      `gorm:"not null" json:"user_id"`
+	ClubID   uint      `gorm:"not null;index" json:"club_id"`
+	Role     string    `gorm:"not null" json:"role"`
+	JoinedAt time.Time `json:"joined_at"`
 }
 
 func (c *Club) Save() error {
-	tx, err := db.DB.Begin()
-	if err != nil {
-		return err
-	}
+	return db.DB.Transaction(func(tx *gorm.DB) error {
+		c.CreatedAt = time.Now()
 
-	query := `
-	INSERT INTO clubs (created_by, is_private, name, description, created_at)
-	VALUES (?, ?, ?, ?, ?)
-	`
+		if err := tx.Create(c).Error; err != nil {
+			return err
+		}
 
-	stmt, err := tx.Prepare(query)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	defer stmt.Close()
+		member := Member{
+			UserID:   c.CreatedBy,
+			ClubID:   c.ID,
+			Role:     "admin",
+			JoinedAt: time.Now(),
+		}
 
-	now := time.Now()
+		if err := tx.Create(&member).Error; err != nil {
+			return err
+		}
 
-	result, err := stmt.Exec(
-		c.CreatedBy,
-		c.IsPrivate,
-		c.Name,
-		c.Description,
-		now,
-	)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	c.ID = id
-	c.CreatedAt = now
-
-	// Add creator as admin member
-	memberQuery := `
-	INSERT INTO members (userid, clubid, role, joined_at)
-	VALUES (?, ?, ?, ?)
-	`
-
-	_, err = tx.Exec(
-		memberQuery,
-		c.CreatedBy,
-		c.ID,
-		"admin",
-		now,
-	)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
+		return nil
+	})
 }
 
 func (c *Club) Update() error {
-	query := `
-	UPDATE clubs
-	SET name = ?, description = ?, is_private = ?
-	WHERE id = ?
-	`
-
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(
-		c.Name,
-		c.Description,
-		c.IsPrivate,
-		c.ID,
-	)
-
-	return err
+	return db.DB.
+		Model(&Club{}).
+		Where("id = ?", c.ID).
+		Updates(map[string]interface{}{
+			"name":        c.Name,
+			"description": c.Description,
+			"is_private":  c.IsPrivate,
+		}).Error
 }
 
-func AddMember(userID, clubID int64, role string) error {
-	query := `
-	INSERT INTO members (userid, clubid, role, joined_at)
-	VALUES (?, ?, ?, ?)
-	`
-
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
+func AddMember(userID, clubID uint, role string) error {
+	member := Member{
+		UserID:   userID,
+		ClubID:   clubID,
+		Role:     role,
+		JoinedAt: time.Now(),
 	}
-	defer stmt.Close()
 
-	_, err = stmt.Exec(
-		userID,
-		clubID,
-		role,
-		time.Now(),
-	)
-
-	if err := AddUserToLeaderboard(userID, clubID); err != nil {
+	if err := db.DB.Create(&member).Error; err != nil {
 		return err
 	}
 
-	return err
+	return AddUserToLeaderboard(userID, clubID)
 }
 
-func GetClubsForUser(userID int64) ([]Club, error) {
-	query := `
-	SELECT 
-		c.id,
-		c.created_by,
-		c.is_private,
-		c.name,
-		c.description,
-		c.created_at
-	FROM clubs c
-	INNER JOIN members m ON m.clubid = c.id
-	WHERE m.userid = ?
-	ORDER BY c.created_at ASC
-	`
-
-	rows, err := db.DB.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
+func GetClubsForUser(userID uint) ([]Club, error) {
 	var clubs []Club
 
-	for rows.Next() {
-		var club Club
-		err := rows.Scan(
-			&club.ID,
-			&club.CreatedBy,
-			&club.IsPrivate,
-			&club.Name,
-			&club.Description,
-			&club.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		clubs = append(clubs, club)
-	}
+	err := db.DB.
+		Joins("JOIN members ON members.club_id = clubs.id").
+		Where("members.user_id = ?", userID).
+		Order("clubs.created_at ASC").
+		Find(&clubs).Error
 
-	return clubs, nil
+	return clubs, err
 }
 
-func GetMemberCountForClub(clubID int64) (int64, error) {
-	query := `
-	SELECT COUNT(*) 
-	FROM members
-	WHERE clubid = ?
-	`
-
+func GetMemberCountForClub(clubID uint) (int64, error) {
 	var count int64
-	err := db.DB.QueryRow(query, clubID).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
 
-	return count, nil
+	err := db.DB.
+		Model(&Member{}).
+		Where("club_id = ?", clubID).
+		Count(&count).Error
+
+	return count, err
 }
 
-func RemoveMember(userID, clubID int64) error {
-	query := `
-	DELETE FROM members
-	WHERE userid = ? AND clubid = ?
-	`
-	_, err := db.DB.Exec(query, userID, clubID)
-	return err
+func RemoveMember(userID, clubID uint) error {
+	return db.DB.
+		Where("user_id = ? AND club_id = ?", userID, clubID).
+		Delete(&Member{}).
+		Error
 }
 
-func GetClubMembers(clubID int) ([]Member, error) {
-	query := `
-	SELECT id, userid, clubid, role, joined_at
-	FROM members
-	WHERE clubid = ?
-	`
-
-	rows, err := db.DB.Query(query, clubID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
+func GetClubMembers(clubID uint) ([]Member, error) {
 	var members []Member
 
-	for rows.Next() {
-		var m Member
-		err := rows.Scan(
-			&m.ID,
-			&m.UserID,
-			&m.ClubID,
-			&m.Role,
-			&m.JoinedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		members = append(members, m)
-	}
+	err := db.DB.
+		Where("club_id = ?", clubID).
+		Find(&members).Error
 
-	return members, nil
+	return members, err
 }

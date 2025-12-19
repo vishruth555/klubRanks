@@ -78,7 +78,7 @@ func login(context *gin.Context) {
 		return
 	}
 
-	logger.LogDebug("User " + user.Username + " authenticated successfully with ID " + strconv.FormatInt(user.ID, 10) + " and AvatarID " + user.AvatarID)
+	logger.LogDebug("User " + user.Username + " authenticated successfully with ID " + strconv.FormatUint(uint64(user.ID), 10) + " and AvatarID " + user.AvatarID)
 
 	token, err := utils.GenerateToken(user.Username, user.ID)
 
@@ -117,7 +117,7 @@ func UpdateAvatar(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 
 	if err := models.UpdateAvatar(userID, req.AvatarID); err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})

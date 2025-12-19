@@ -2,49 +2,42 @@ package models
 
 import (
 	"fmt"
-	"klubRanks/db"
 	"time"
+
+	"klubRanks/db"
+
+	"gorm.io/gorm"
 )
 
 type LeaderboardEntry struct {
-	ID            int64      `db:"id" json:"id"`
-	UserID        int64      `db:"userid" json:"user_id"`
-	ClubID        int64      `db:"clubid" json:"club_id"`
-	Score         int        `db:"score" json:"score"`
-	CurrentStreak int        `db:"current_streak" json:"current_streak"`
-	LongestStreak int        `db:"longest_streak" json:"longest_streak"`
-	LastCheckedIn *time.Time `db:"last_checkedin" json:"last_checkedin,omitempty"`
+	ID            uint       `gorm:"primaryKey" json:"id"`
+	UserID        uint       `gorm:"not null;index:idx_user_club,unique" json:"user_id"`
+	ClubID        uint       `gorm:"not null;index:idx_user_club,unique;index" json:"club_id"`
+	Score         int        `gorm:"not null;default:0" json:"score"`
+	CurrentStreak int        `gorm:"not null;default:0" json:"current_streak"`
+	LongestStreak int        `gorm:"not null;default:0" json:"longest_streak"`
+	LastCheckedIn *time.Time `gorm:"column:last_checkedin" json:"last_checkedin,omitempty"`
 }
 
-func AddUserToLeaderboard(userID, clubID int64) error {
-	query := `
-	INSERT INTO leaderboard (userid, clubid, score)
-	VALUES (?, ?, ?)
-	`
+func (LeaderboardEntry) TableName() string {
+	return "leaderboard"
+}
 
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
+func AddUserToLeaderboard(userID, clubID uint) error {
+	entry := LeaderboardEntry{
+		UserID: userID,
+		ClubID: clubID,
+		Score:  0,
 	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(
-		userID,
-		clubID,
-		0,
-	)
-
-	return err
+	return db.DB.Create(&entry).Error
 }
 
-func updateStreaks(userID, clubID int64) error {
-	var lastCheckedIn *time.Time
+func updateStreaks(userID, clubID uint) error {
+	var entry LeaderboardEntry
 
-	err := db.DB.QueryRow(
-		`SELECT last_checkedin FROM leaderboard WHERE userid = ? AND clubid = ?`,
-		userID, clubID,
-	).Scan(&lastCheckedIn)
-
+	err := db.DB.
+		Where("user_id = ? AND club_id = ?", userID, clubID).
+		First(&entry).Error
 	if err != nil {
 		return err
 	}
@@ -53,184 +46,111 @@ func updateStreaks(userID, clubID int64) error {
 	today := now.Truncate(24 * time.Hour)
 	yesterday := today.AddDate(0, 0, -1)
 
-	if lastCheckedIn == nil {
-		_, err = db.DB.Exec(`
-			UPDATE leaderboard
-			SET
-				current_streak = 1,
-				longest_streak = CASE
-					WHEN longest_streak < 1 THEN 1
-					ELSE longest_streak
-				END,
-				last_checkedin = ?
-			WHERE userid = ? AND clubid = ?
-		`, now, userID, clubID)
-		return err
-	}
-
-	lastDay := lastCheckedIn.Truncate(24 * time.Hour)
-
 	switch {
+	case entry.LastCheckedIn == nil:
+		entry.CurrentStreak = 1
+		if entry.LongestStreak < 1 {
+			entry.LongestStreak = 1
+		}
+		entry.LastCheckedIn = &now
 
-	// Checked in yesterday → increment streak
-	case lastDay.Equal(yesterday):
-		_, err = db.DB.Exec(`
-			UPDATE leaderboard
-			SET current_streak = current_streak + 1,
-			    longest_streak = CASE
-			        WHEN current_streak + 1 > longest_streak
-			        THEN current_streak + 1
-			        ELSE longest_streak
-			    END,
-			    last_checkedin = ?
-			WHERE userid = ? AND clubid = ?
-		`, now, userID, clubID)
-
-	// Missed a day → reset streak
-	case lastDay.Before(yesterday):
-		_, err = db.DB.Exec(`
-			UPDATE leaderboard
-			SET
-				current_streak = 1,
-				longest_streak = CASE
-					WHEN longest_streak < 1 THEN 1
-					ELSE longest_streak
-				END,
-				last_checkedin = ?
-			WHERE userid = ? AND clubid = ?
-		`, now, userID, clubID)
-
-	// Same day → do nothing
 	default:
-		return nil
+		lastDay := entry.LastCheckedIn.Truncate(24 * time.Hour)
+
+		// Checked in yesterday → increment streak
+		if lastDay.Equal(yesterday) {
+			entry.CurrentStreak++
+			if entry.CurrentStreak > entry.LongestStreak {
+				entry.LongestStreak = entry.CurrentStreak
+			}
+			entry.LastCheckedIn = &now
+
+			// Missed a day → reset
+		} else if lastDay.Before(yesterday) {
+			entry.CurrentStreak = 1
+			if entry.LongestStreak < 1 {
+				entry.LongestStreak = 1
+			}
+			entry.LastCheckedIn = &now
+
+			// Same day → do nothing
+		} else {
+			return nil
+		}
 	}
 
-	return err
+	return db.DB.Save(&entry).Error
 }
 
-func UpdateLeaderboardScore(userID, clubID int64, delta int) error {
-	err := updateStreaks(userID, clubID)
-	if err != nil {
+func UpdateLeaderboardScore(userID, clubID uint, delta int) error {
+	if err := updateStreaks(userID, clubID); err != nil {
 		return err
 	}
 
-	query := `
-	UPDATE leaderboard
-	SET score = score + ?, last_checkedin = ?
-	WHERE userid = ? AND clubid = ?
-	`
-
-	_, err = db.DB.Exec(
-		query,
-		delta,
-		time.Now(),
-		userID,
-		clubID,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return err
+	return db.DB.
+		Model(&LeaderboardEntry{}).
+		Where("user_id = ? AND club_id = ?", userID, clubID).
+		UpdateColumns(map[string]interface{}{
+			"score":          gorm.Expr("score + ?", delta),
+			"last_checkedin": time.Now(),
+		}).Error
 }
 
-func GetLeaderboardForClub(clubID int64, limit int) ([]LeaderboardEntry, error) {
-	query := `
-	SELECT id, userid, clubid, score, last_checkedin, current_streak
-	FROM leaderboard
-	WHERE clubid = ?
-	ORDER BY score DESC, last_checkedin ASC
-	LIMIT ?
-	`
-
-	rows, err := db.DB.Query(query, clubID, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
+func GetLeaderboardForClub(clubID uint, limit int) ([]LeaderboardEntry, error) {
 	var entries []LeaderboardEntry
 
-	for rows.Next() {
-		var e LeaderboardEntry
-		err := rows.Scan(
-			&e.ID,
-			&e.UserID,
-			&e.ClubID,
-			&e.Score,
-			&e.LastCheckedIn,
-			&e.CurrentStreak,
-		)
-		if err != nil {
-			return nil, err
-		}
-		entries = append(entries, e)
-	}
+	err := db.DB.
+		Where("club_id = ?", clubID).
+		Order("score DESC, last_checkedin ASC").
+		Limit(limit).
+		Find(&entries).Error
 
-	return entries, nil
+	return entries, err
 }
 
-func GetLeaderboardEntryForUser(userID, clubID int64) (*LeaderboardEntry, error) {
-	query := `
-	SELECT
-		id,
-		userid,
-		clubid,
-		score,
-		current_streak,
-		longest_streak,
-		last_checkedin
-	FROM leaderboard
-	WHERE userid = ? AND clubid = ?
-	LIMIT 1
-	`
+func GetLeaderboardEntryForUser(userID, clubID uint) (*LeaderboardEntry, error) {
+	var entry LeaderboardEntry
 
-	var e LeaderboardEntry
-	err := db.DB.QueryRow(query, userID, clubID).Scan(
-		&e.ID,
-		&e.UserID,
-		&e.ClubID,
-		&e.Score,
-		&e.CurrentStreak,
-		&e.LongestStreak,
-		&e.LastCheckedIn,
-	)
+	err := db.DB.
+		Where("user_id = ? AND club_id = ?", userID, clubID).
+		First(&entry).Error
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &e, nil
+	return &entry, nil
 }
 
-func GetUserRankInClub(userID, clubID int64) (int, error) {
+func GetUserRankInClub(userID, clubID uint) (int, error) {
+	var rank int
+
 	query := `
 	SELECT COUNT(*) + 1
 	FROM leaderboard l
 	JOIN leaderboard me
-	  ON me.userid = ? AND me.clubid = ?
-	WHERE l.clubid = ?
+	  ON me.user_id = ? AND me.club_id = ?
+	WHERE l.club_id = ?
 	  AND (
 	    l.score > me.score OR
-	    (l.score = me.score AND l.last_checkedin < me.last_checkedin)
+	    (l.score = me.score AND l.last_checkedin > me.last_checkedin)
 	  )
 	`
 
-	var rank int
-	err := db.DB.QueryRow(query, userID, clubID, clubID).Scan(&rank)
-	if err != nil {
-		return 0, err
-	}
-
-	return rank, nil
+	err := db.DB.Raw(query, userID, clubID, clubID).Scan(&rank).Error
+	return rank, err
 }
 
-func CalculatePercentile(userID, clubID int64) (string, error) {
-	var totalMembers int
-	err := db.DB.QueryRow(`SELECT COUNT(*) FROM members WHERE clubid = ?`, clubID).Scan(&totalMembers)
-	if err != nil {
+func CalculatePercentile(userID, clubID uint) (string, error) {
+	var totalMembers int64
+
+	if err := db.DB.
+		Table("members").
+		Where("club_id = ?", clubID).
+		Count(&totalMembers).Error; err != nil {
 		return "N/A", err
 	}
+
 	if totalMembers <= 1 {
 		return "Top 100%", nil
 	}
@@ -245,17 +165,19 @@ func CalculatePercentile(userID, clubID int64) (string, error) {
 	if percentage <= 1 {
 		return "Top 1%", nil
 	}
+
 	return fmt.Sprintf("Top %.0f%%", percentage), nil
 }
 
-func GetWeeklyActivity(clubID, userID int64) (map[string]int, error) {
-	query := `
-		SELECT strftime('%Y-%m-%d', timestamp) as day, SUM(points)
+func GetWeeklyActivity(clubID, userID uint) (map[string]int, error) {
+	rows, err := db.DB.Raw(`
+		SELECT DATE(timestamp) as day, SUM(points)
 		FROM activity_log
-		WHERE clubid = ? AND userid = ? AND timestamp >= datetime('now', '-7 days')
+		WHERE club_id = ? AND user_id = ?
+		  AND timestamp >= NOW() - INTERVAL '7 days'
 		GROUP BY day
-	`
-	rows, err := db.DB.Query(query, clubID, userID)
+	`, clubID, userID).Rows()
+
 	if err != nil {
 		return nil, err
 	}
@@ -268,15 +190,20 @@ func GetWeeklyActivity(clubID, userID int64) (map[string]int, error) {
 		rows.Scan(&day, &points)
 		activity[day] = points
 	}
+
 	return activity, nil
 }
 
-func GetClubLeaderID(clubID int64) int64 {
-	var leaderID int64
-	query := `SELECT userid FROM leaderboard WHERE clubid = ? ORDER BY score DESC LIMIT 1`
-	err := db.DB.QueryRow(query, clubID).Scan(&leaderID)
-	if err != nil {
-		return 0
-	}
+func GetClubLeaderID(clubID uint) uint {
+	var leaderID uint
+
+	db.DB.
+		Model(&LeaderboardEntry{}).
+		Select("user_id").
+		Where("club_id = ?", clubID).
+		Order("score DESC").
+		Limit(1).
+		Scan(&leaderID)
+
 	return leaderID
 }

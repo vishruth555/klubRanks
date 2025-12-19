@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateToken(username string, userId int64) (string, error) {
+func GenerateToken(username string, userId uint) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
 		"userId":   userId,
@@ -17,7 +17,7 @@ func GenerateToken(username string, userId int64) (string, error) {
 	return token.SignedString([]byte(config.AppConfig.JWT.Secret))
 }
 
-func VerifyToken(token string) (int64, error) {
+func VerifyToken(token string) (uint, error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
@@ -42,7 +42,7 @@ func VerifyToken(token string) (int64, error) {
 	}
 
 	// email, _ := claims["email"].(string)
-	userId := int64(claims["userId"].(float64))
+	userId := uint(claims["userId"].(float64))
 
 	return userId, nil
 }

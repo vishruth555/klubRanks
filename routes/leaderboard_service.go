@@ -24,16 +24,16 @@ import (
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/leaderboard/score [post]
 func UpdateLeaderboardScore(c *gin.Context) {
-	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
 		return
 	}
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 	logger.LogInfo("Updating leaderboard score for user: ", userID, " in club: ", clubID)
 
-	err = models.UpdateLeaderboardScore(userID, clubID, config.AppConfig.Server.Counter)
+	err = models.UpdateLeaderboardScore(userID, uint(clubID), config.AppConfig.Server.Counter)
 	if err != nil {
 		if err.Error() == "leaderboard entry not found" {
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: err.Error()})
@@ -60,7 +60,7 @@ func UpdateLeaderboardScore(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/leaderboard [get]
 func GetLeaderboard(c *gin.Context) {
-	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
 		return
@@ -73,7 +73,7 @@ func GetLeaderboard(c *gin.Context) {
 		}
 	}
 
-	entries, err := models.GetLeaderboardForClub(clubID, limit)
+	entries, err := models.GetLeaderboardForClub(uint(clubID), limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return

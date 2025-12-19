@@ -31,7 +31,7 @@ type LoginResponse struct {
 }
 
 type User struct {
-	ID       int64  `json:"id"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	AvatarID string `json:"avatar_id"`
 }

@@ -32,7 +32,7 @@ func CreateClub(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 
 	club := models.Club{
 		Name:        req.Name,
@@ -74,7 +74,7 @@ func CreateClub(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs [get]
 func GetMyClubs(c *gin.Context) {
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 
 	clubs, err := models.GetClubsForUser(userID)
 	if err != nil {
@@ -120,16 +120,16 @@ func GetMyClubs(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/members [post]
 func AddMember(c *gin.Context) {
-	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
 		return
 	}
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 	role := "member"
 
-	if err := models.AddMember(userID, clubID, role); err != nil {
+	if err := models.AddMember(userID, uint(clubID), role); err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -150,9 +150,9 @@ func AddMember(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/members [get]
 func GetClubMembers(c *gin.Context) {
-	clubID, _ := strconv.Atoi(c.Param("clubId"))
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
 
-	members, err := models.GetClubMembers(clubID)
+	members, err := models.GetClubMembers(uint(clubID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
@@ -179,7 +179,6 @@ func GetClubMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// NEW FUNCTION: LeaveClub
 // @Summary Leave a club
 // @Tags Clubs
 // @Security BearerAuth
@@ -196,9 +195,9 @@ func LeaveClub(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 
-	if err := models.RemoveMember(userID, clubID); err != nil {
+	if err := models.RemoveMember(userID, uint(clubID)); err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -220,9 +219,9 @@ func LeaveClub(c *gin.Context) {
 func GetCurrentUserStats(c *gin.Context) {
 	clubID, _ := strconv.ParseInt(c.Param("clubId"), 10, 64)
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 
-	userStats, err := getClubUserStats(userID, clubID)
+	userStats, err := getClubUserStats(userID, uint(clubID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
@@ -242,11 +241,11 @@ func GetCurrentUserStats(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/stats/{userId} [get]
 func GetUserStats(c *gin.Context) {
-	clubID, _ := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	clubID, _ := strconv.ParseUint(c.Param("clubId"), 10, 64)
 
-	userID, _ := strconv.ParseInt(c.Param("userId"), 10, 64)
+	userID, _ := strconv.ParseUint(c.Param("userId"), 10, 64)
 
-	userStats, err := getClubUserStats(userID, clubID)
+	userStats, err := getClubUserStats(uint(userID), uint(clubID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 		return
@@ -255,7 +254,7 @@ func GetUserStats(c *gin.Context) {
 	c.JSON(http.StatusOK, userStats)
 }
 
-func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
+func getClubUserStats(userID uint, clubID uint) (dto.UserStats, error) {
 
 	var userStats dto.UserStats
 	user, err := models.GetUserByID(userID)
@@ -277,24 +276,24 @@ func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
 
 	percentile, _ := models.CalculatePercentile(userID, clubID)
 
-    myActivity, _ := models.GetWeeklyActivity(clubID, userID)
-    leaderID := models.GetClubLeaderID(clubID)
-    leaderActivity, _ := models.GetWeeklyActivity(clubID, leaderID)
+	myActivity, _ := models.GetWeeklyActivity(clubID, userID)
+	leaderID := models.GetClubLeaderID(clubID)
+	leaderActivity, _ := models.GetWeeklyActivity(clubID, leaderID)
 
-    graphData := make([]dto.GraphDataPoint, 0)
-    now := time.Now()
+	graphData := make([]dto.GraphDataPoint, 0)
+	now := time.Now()
 
 	for i := 6; i >= 0; i-- {
-        date := now.AddDate(0, 0, -i)
-        dayKey := date.Format("2006-01-02")
-        dayLabel := date.Format("Mon") // "Mon", "Tue"
+		date := now.AddDate(0, 0, -i)
+		dayKey := date.Format("2006-01-02")
+		dayLabel := date.Format("Mon") // "Mon", "Tue"
 
-        graphData = append(graphData, dto.GraphDataPoint{
-            Day:    dayLabel,
-            You:    myActivity[dayKey],
-            Leader: leaderActivity[dayKey],
-        })
-    }
+		graphData = append(graphData, dto.GraphDataPoint{
+			Day:    dayLabel,
+			You:    myActivity[dayKey],
+			Leader: leaderActivity[dayKey],
+		})
+	}
 
 	userStats = dto.UserStats{
 		UserID:        user.ID,
@@ -306,7 +305,7 @@ func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
 		LastCheckedIn: stats.LastCheckedIn,
 		Rank:          rank,
 		Percentile:    percentile,
-        GraphData:     graphData,
+		GraphData:     graphData,
 	}
 	return userStats, nil
 }

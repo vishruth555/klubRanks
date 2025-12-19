@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/messages [post]
 func SendMessage(c *gin.Context) {
-	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error: "invalid club id",
@@ -39,10 +39,10 @@ func SendMessage(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetInt64("userId")
+	userID := c.GetUint("userId")
 
 	msg := models.Message{
-		ClubID:  clubID,
+		ClubID:  uint(clubID),
 		UserID:  userID,
 		Message: req.Message,
 	}
@@ -71,7 +71,7 @@ func SendMessage(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId}/messages [get]
 func GetClubMessages(c *gin.Context) {
-	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error: "invalid club id",
@@ -94,7 +94,7 @@ func GetClubMessages(c *gin.Context) {
 		}
 	}
 
-	messages, err := models.GetMessagesForClub(clubID, limit, offset)
+	messages, err := models.GetMessagesForClub(uint(clubID), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error: err.Error(),

@@ -5,38 +5,32 @@ import (
 	"klubRanks/db"
 	"klubRanks/utils"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
-	ID        int64     `db:"id" json:"id"`
-	Username  string    `db:"username" json:"username"`
-	Password  string    `db:"password" json:"-"`
-	AvatarID  string    `db:"avatar_id" json:"avatar_id"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Username  string    `gorm:"uniqueIndex;not null" json:"username"`
+	Password  string    `gorm:"not null" json:"-"`
+	AvatarID  string    `gorm:"default:default" json:"avatar_id"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-func UpdateAvatar(userID int64, avatarID string) error {
-	query := `UPDATE users SET avatar_id = ? WHERE id = ?`
-	_, err := db.DB.Exec(query, avatarID, userID)
-	return err
+func UpdateAvatar(userID uint, avatarID string) error {
+	return db.DB.
+		Model(&User{}).
+		Where("id = ?", userID).
+		Update("avatar_id", avatarID).
+		Error
 }
 
-func GetUserByID(id int64) (*User, error) {
-	query := `
-	SELECT id, username, avatar_id, created_at
-	FROM users
-	WHERE id = ?
-	`
-
-	row := db.DB.QueryRow(query, id)
-
+func GetUserByID(id uint) (*User, error) {
 	var user User
-	err := row.Scan(
-		&user.ID,
-		&user.Username,
-		&user.AvatarID,
-		&user.CreatedAt,
-	)
+
+	err := db.DB.
+		Select("id", "username", "avatar_id", "created_at").
+		First(&user, id).Error
 
 	if err != nil {
 		return nil, err
@@ -46,63 +40,37 @@ func GetUserByID(id int64) (*User, error) {
 }
 
 func (u *User) Save() error {
-	query := `
-	INSERT INTO users (username, password, created_at)
-	VALUES (?, ?, ?)
-	`
-
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
 	hashedPassword, err := utils.HashPassword(u.Password)
 	if err != nil {
 		return err
 	}
 
-	now := time.Now()
+	u.Password = hashedPassword
+	u.CreatedAt = time.Now()
 
-	result, err := stmt.Exec(
-		u.Username,
-		hashedPassword,
-		now,
-	)
-	if err != nil {
-		return err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	u.ID = id
-	u.CreatedAt = now
-
-	return nil
+	return db.DB.Create(u).Error
 }
 
 func (u *User) ValidateCredentials() error {
-	query := `
-	SELECT id, password, COALESCE(NULLIF(avatar_id, ''), 'default')
-	FROM users
-	WHERE username = ?
-	`
+	var user User
 
-	row := db.DB.QueryRow(query, u.Username)
+	err := db.DB.
+		Where("username = ?", u.Username).
+		First(&user).Error
 
-	var hashedPassword string
-	err := row.Scan(&u.ID, &hashedPassword, &u.AvatarID)
-	//TODO remove detailed error messages
 	if err != nil {
-		return errors.New("invalid credentials" + err.Error())
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("invalid credentials")
+		}
+		return err
 	}
 
-	if !utils.CheckPasswordHash(u.Password, hashedPassword) {
-		return errors.New("invalid credentials" + err.Error())
+	if !utils.CheckPasswordHash(u.Password, user.Password) {
+		return errors.New("invalid credentials")
 	}
+
+	u.ID = user.ID
+	u.AvatarID = user.AvatarID
 
 	return nil
 }
