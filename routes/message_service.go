@@ -45,9 +45,10 @@ func SendMessage(c *gin.Context) {
 		ClubID:  uint(clubID),
 		UserID:  userID,
 		Message: req.Message,
+		Type:    models.MessageTypeUser,
 	}
 
-	if err := models.AddMessage(&msg); err != nil {
+	if err := msg.AddMessage(); err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error: err.Error(),
 		})
@@ -117,6 +118,7 @@ func GetClubMessages(c *gin.Context) {
 				Username: user.Username,
 				AvatarID: user.AvatarID,
 			},
+			Type:      m.Type,
 			Message:   m.Message,
 			Timestamp: m.Timestamp,
 		})

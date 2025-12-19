@@ -694,6 +694,9 @@ const docTemplate = `{
                 "timestamp": {
                     "type": "string"
                 },
+                "type": {
+                    "type": "string"
+                },
                 "user": {
                     "$ref": "#/definitions/dto.User"
                 }
@@ -702,6 +705,9 @@ const docTemplate = `{
         "dto.ClubResponse": {
             "type": "object",
             "properties": {
+                "action": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -728,9 +734,13 @@ const docTemplate = `{
         "dto.CreateClubRequest": {
             "type": "object",
             "required": [
+                "action",
                 "name"
             ],
             "properties": {
+                "action": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -754,14 +764,14 @@ const docTemplate = `{
         "dto.GraphDataPoint": {
             "type": "object",
             "properties": {
-                "Leader": {
-                    "type": "integer"
-                },
-                "You": {
-                    "type": "integer"
-                },
-                "name": {
+                "day": {
                     "type": "string"
+                },
+                "scores": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -919,7 +929,7 @@ const docTemplate = `{
                 "longest_streak": {
                     "type": "integer"
                 },
-                "percentile": {
+                "next_checkin": {
                     "type": "string"
                 },
                 "rank": {

@@ -14,6 +14,7 @@ type Club struct {
 	IsPrivate   bool      `json:"is_private"`
 	Name        string    `gorm:"not null" json:"name"`
 	Description *string   `json:"description,omitempty"`
+	Action      string    `gorm:"not null" json:"action"`
 	CreatedAt   time.Time `json:"created_at"`
 
 	Members []Member `gorm:"foreignKey:ClubID"`
@@ -58,7 +59,19 @@ func (c *Club) Update() error {
 			"name":        c.Name,
 			"description": c.Description,
 			"is_private":  c.IsPrivate,
+			"action":      c.Action,
 		}).Error
+}
+
+func getClubByID(clubID uint) (*Club, error) {
+	var club Club
+
+	err := db.DB.
+		First(&club, clubID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &club, nil
 }
 
 func AddMember(userID, clubID uint, role string) error {
@@ -72,6 +85,8 @@ func AddMember(userID, clubID uint, role string) error {
 	if err := db.DB.Create(&member).Error; err != nil {
 		return err
 	}
+
+	AddActivityLog(userID, clubID, 0, ActionJoin)
 
 	return AddUserToLeaderboard(userID, clubID)
 }
@@ -100,6 +115,7 @@ func GetMemberCountForClub(clubID uint) (int64, error) {
 }
 
 func RemoveMember(userID, clubID uint) error {
+	AddActivityLog(userID, clubID, 0, ActionLeave)
 	return db.DB.
 		Where("user_id = ? AND club_id = ?", userID, clubID).
 		Delete(&Member{}).

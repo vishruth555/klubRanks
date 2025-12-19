@@ -8,12 +8,14 @@ type CreateClubRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description *string `json:"description,omitempty"`
 	IsPrivate   bool    `json:"is_private"`
+	Action      string  `json:"action" binding:"required"`
 }
 
 type UpdateClubRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description *string `json:"description,omitempty"`
 	IsPrivate   bool    `json:"is_private"`
+	Action      string  `json:"action"`
 }
 
 /*************** RESPONSE DTOs ***************/
@@ -22,6 +24,7 @@ type ClubResponse struct {
 	ID              uint      `json:"id"`
 	Name            string    `json:"name"`
 	Description     *string   `json:"description,omitempty"`
+	Action          string    `json:"action"`
 	IsPrivate       bool      `json:"is_private"`
 	NumberOfMembers int       `json:"number_of_members"`
 	CreatedBy       uint      `json:"created_by"`
@@ -35,9 +38,8 @@ type MemberResponse struct {
 }
 
 type GraphDataPoint struct {
-	Day    string `json:"name"`
-	You    int    `json:"You"`
-	Leader int    `json:"Leader"`
+	Day    string         `json:"day"`
+	Scores map[string]int `json:"scores"`
 }
 
 type UserStats struct {
@@ -51,8 +53,8 @@ type UserStats struct {
 	LongestStreak int `json:"longest_streak"`
 
 	LastCheckedIn *time.Time `json:"last_checkedin,omitempty"`
+	NextCheckIn   *time.Time `json:"next_checkin,omitempty"`
 	Rank          int        `json:"rank"`
 
-	Percentile string           `json:"percentile"`
-	GraphData  []GraphDataPoint `json:"graph_data"`
+	GraphData []GraphDataPoint `json:"graph_data"`
 }

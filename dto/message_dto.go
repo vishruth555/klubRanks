@@ -14,4 +14,5 @@ type ClubMessageResponse struct {
 	User      User      `json:"user"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
+	Type      string    `json:"type"`
 }

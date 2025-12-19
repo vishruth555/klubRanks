@@ -6,15 +6,21 @@ import (
 	"klubRanks/db"
 )
 
+const (
+	MessageTypeUser   = "user"   // normal chat
+	MessageTypeSystem = "system" // join/leave/score update
+)
+
 type Message struct {
 	ID        uint      `gorm:"primaryKey" json:"message_id"`
 	ClubID    uint      `gorm:"not null;index" json:"club_id"`
 	UserID    uint      `gorm:"not null;index" json:"user_id"`
 	Timestamp time.Time `gorm:"not null;index" json:"timestamp"`
+	Type      string    `gorm:"not null;index" json:"type"`
 	Message   string    `gorm:"not null" json:"message"`
 }
 
-func AddMessage(m *Message) error {
+func (m *Message) AddMessage() error {
 	m.Timestamp = time.Now()
 	return db.DB.Create(m).Error
 }

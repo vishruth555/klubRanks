@@ -38,6 +38,7 @@ func main() {
 
 	db.InitDB()
 	createTables()
+
 	server := gin.Default()
 	enableCORS(server)
 
@@ -76,5 +77,6 @@ func createTables() {
 		&models.Member{},
 		&models.LeaderboardEntry{},
 		&models.Message{},
+		&models.ActivityLog{},
 	)
 }

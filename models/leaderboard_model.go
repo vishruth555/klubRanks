@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"klubRanks/db"
@@ -87,6 +86,8 @@ func UpdateLeaderboardScore(userID, clubID uint, delta int) error {
 		return err
 	}
 
+	AddActivityLog(userID, clubID, delta, ActionUpdate)
+
 	return db.DB.
 		Model(&LeaderboardEntry{}).
 		Where("user_id = ? AND club_id = ?", userID, clubID).
@@ -139,34 +140,6 @@ func GetUserRankInClub(userID, clubID uint) (int, error) {
 
 	err := db.DB.Raw(query, userID, clubID, clubID).Scan(&rank).Error
 	return rank, err
-}
-
-func CalculatePercentile(userID, clubID uint) (string, error) {
-	var totalMembers int64
-
-	if err := db.DB.
-		Table("members").
-		Where("club_id = ?", clubID).
-		Count(&totalMembers).Error; err != nil {
-		return "N/A", err
-	}
-
-	if totalMembers <= 1 {
-		return "Top 100%", nil
-	}
-
-	rank, err := GetUserRankInClub(userID, clubID)
-	if err != nil {
-		return "N/A", err
-	}
-
-	percentage := (float64(rank) / float64(totalMembers)) * 100
-
-	if percentage <= 1 {
-		return "Top 1%", nil
-	}
-
-	return fmt.Sprintf("Top %.0f%%", percentage), nil
 }
 
 func GetWeeklyActivity(clubID, userID uint) (map[string]int, error) {

@@ -687,6 +687,9 @@
                 "timestamp": {
                     "type": "string"
                 },
+                "type": {
+                    "type": "string"
+                },
                 "user": {
                     "$ref": "#/definitions/dto.User"
                 }
@@ -695,6 +698,9 @@
         "dto.ClubResponse": {
             "type": "object",
             "properties": {
+                "action": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -721,9 +727,13 @@
         "dto.CreateClubRequest": {
             "type": "object",
             "required": [
+                "action",
                 "name"
             ],
             "properties": {
+                "action": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -747,14 +757,14 @@
         "dto.GraphDataPoint": {
             "type": "object",
             "properties": {
-                "Leader": {
-                    "type": "integer"
-                },
-                "You": {
-                    "type": "integer"
-                },
-                "name": {
+                "day": {
                     "type": "string"
+                },
+                "scores": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -912,7 +922,7 @@
                 "longest_streak": {
                     "type": "integer"
                 },
-                "percentile": {
+                "next_checkin": {
                     "type": "string"
                 },
                 "rank": {

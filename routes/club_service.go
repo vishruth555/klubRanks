@@ -38,6 +38,7 @@ func CreateClub(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		IsPrivate:   req.IsPrivate,
+		Action:      req.Action,
 		CreatedBy:   userID,
 	}
 
@@ -58,6 +59,7 @@ func CreateClub(c *gin.Context) {
 		Name:            club.Name,
 		Description:     club.Description,
 		IsPrivate:       club.IsPrivate,
+		Action:          club.Action,
 		NumberOfMembers: 1,
 		CreatedBy:       club.CreatedBy,
 		CreatedAt:       club.CreatedAt,
@@ -257,42 +259,48 @@ func GetUserStats(c *gin.Context) {
 func getClubUserStats(userID uint, clubID uint) (dto.UserStats, error) {
 
 	var userStats dto.UserStats
+
 	user, err := models.GetUserByID(userID)
 	if err != nil {
 		return userStats, err
 	}
 
-	logger.LogInfo("Fetching stats for user: ", userID, " in club: ", clubID)
+	logger.LogInfo("Fetching stats for user:", userID, "in club:", clubID)
 
 	stats, err := models.GetLeaderboardEntryForUser(userID, clubID)
 	if err != nil {
 		return userStats, err
 	}
-	logger.LogDebug("Leaderboard stats: ", stats)
+
 	rank, err := models.GetUserRankInClub(userID, clubID)
 	if err != nil {
 		return userStats, err
 	}
 
-	percentile, _ := models.CalculatePercentile(userID, clubID)
-
-	myActivity, _ := models.GetWeeklyActivity(clubID, userID)
-	leaderID := models.GetClubLeaderID(clubID)
-	leaderActivity, _ := models.GetWeeklyActivity(clubID, leaderID)
-
+	// 🔥 Build graph data using daily scores
 	graphData := make([]dto.GraphDataPoint, 0)
 	now := time.Now()
 
 	for i := 6; i >= 0; i-- {
 		date := now.AddDate(0, 0, -i)
-		dayKey := date.Format("2006-01-02")
-		dayLabel := date.Format("Mon") // "Mon", "Tue"
+		dayLabel := date.Format("Mon")
+
+		scores, err := models.GetDailyScoresForClub(clubID, date, userID)
+		if err != nil {
+			return userStats, err
+		}
 
 		graphData = append(graphData, dto.GraphDataPoint{
 			Day:    dayLabel,
-			You:    myActivity[dayKey],
-			Leader: leaderActivity[dayKey],
+			Scores: scores,
 		})
+	}
+
+	var nextCheckIn *time.Time
+
+	if stats.LastCheckedIn != nil {
+		t := stats.LastCheckedIn.Add(5 * time.Minute)
+		nextCheckIn = &t
 	}
 
 	userStats = dto.UserStats{
@@ -303,9 +311,10 @@ func getClubUserStats(userID uint, clubID uint) (dto.UserStats, error) {
 		CurrentStreak: stats.CurrentStreak,
 		LongestStreak: stats.LongestStreak,
 		LastCheckedIn: stats.LastCheckedIn,
+		NextCheckIn:   nextCheckIn,
 		Rank:          rank,
-		Percentile:    percentile,
 		GraphData:     graphData,
 	}
+
 	return userStats, nil
 }
