@@ -23,6 +23,7 @@ type ErrorResponse struct {
 type LoginResponse struct {
 	Message string `json:"message" example:"login successful"`
 	Token   string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	User    User   `json:"user"`
 }
 
 type User struct {
