@@ -12,6 +12,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required" example:"strongpassword"`
 }
 
+type UpdateAvatarRequest struct {
+	AvatarID string `json:"avatar_id" binding:"required"`
+}
+
 type MessageResponse struct {
 	Message string `json:"message" example:"user created successfully"`
 }

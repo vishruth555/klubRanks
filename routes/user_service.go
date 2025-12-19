@@ -92,3 +92,31 @@ func login(context *gin.Context) {
 		},
 	})
 }
+
+// UpdateAvatar godoc
+// @Summary Update user avatar
+// @Tags Auth
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param avatar body dto.UpdateAvatarRequest true "Avatar payload"
+// @Success 200 {object} dto.MessageResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /users/avatar [put]
+func UpdateAvatar(c *gin.Context) {
+	var req dto.UpdateAvatarRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid request"})
+		return
+	}
+
+	userID := c.GetInt64("userId")
+
+	if err := models.UpdateAvatar(userID, req.AvatarID); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.MessageResponse{Message: "avatar updated"})
+}

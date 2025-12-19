@@ -26,6 +26,8 @@ func RegisterRoutes(server *gin.Engine) {
 	auth := server.Group("/")
 	auth.Use(middlewares.Aunthenticate)
 
+	auth.PUT("/users/avatar", UpdateAvatar)
+	
 	clubs := auth.Group("/clubs")
 	{
 		clubs.POST("", CreateClub)

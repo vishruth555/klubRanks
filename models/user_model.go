@@ -15,6 +15,12 @@ type User struct {
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 
+func UpdateAvatar(userID int64, avatarID string) error {
+	query := `UPDATE users SET avatar_id = ? WHERE id = ?`
+	_, err := db.DB.Exec(query, avatarID, userID)
+	return err
+}
+
 func GetUserByID(id int64) (*User, error) {
 	query := `
 	SELECT id, username, avatar_id, created_at
