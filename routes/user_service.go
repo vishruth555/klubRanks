@@ -81,5 +81,14 @@ func login(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, dto.LoginResponse{Message: "login successful", Token: token})
+    // Return the token AND the user details
+	context.JSON(http.StatusOK, dto.LoginResponse{
+		Message: "login successful", 
+		Token:   token,
+		User: dto.User{
+			ID:       user.ID,
+			Username: user.Username,
+			AvatarID: user.AvatarID,
+		},
+	})
 }
