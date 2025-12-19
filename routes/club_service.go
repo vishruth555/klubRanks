@@ -6,6 +6,7 @@ import (
 	"klubRanks/models"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -274,6 +275,27 @@ func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
 		return userStats, err
 	}
 
+	percentile, _ := models.CalculatePercentile(userID, clubID)
+
+    myActivity, _ := models.GetWeeklyActivity(clubID, userID)
+    leaderID := models.GetClubLeaderID(clubID)
+    leaderActivity, _ := models.GetWeeklyActivity(clubID, leaderID)
+
+    graphData := make([]dto.GraphDataPoint, 0)
+    now := time.Now()
+
+	for i := 6; i >= 0; i-- {
+        date := now.AddDate(0, 0, -i)
+        dayKey := date.Format("2006-01-02")
+        dayLabel := date.Format("Mon") // "Mon", "Tue"
+
+        graphData = append(graphData, dto.GraphDataPoint{
+            Day:    dayLabel,
+            You:    myActivity[dayKey],
+            Leader: leaderActivity[dayKey],
+        })
+    }
+
 	userStats = dto.UserStats{
 		UserID:        user.ID,
 		Username:      user.Username,
@@ -283,6 +305,8 @@ func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
 		LongestStreak: stats.LongestStreak,
 		LastCheckedIn: stats.LastCheckedIn,
 		Rank:          rank,
+		Percentile:    percentile,
+        GraphData:     graphData,
 	}
 	return userStats, nil
 }

@@ -37,9 +37,24 @@ export interface Message {
   timestamp: string; // ISO string
 }
 
+export interface GraphDataPoint {
+    name: string;
+    You: number;
+    Leader: number;
+}
+
+export interface UserStats {
+    score: number;
+    rank: number;
+    current_streak: number;
+    percentile: string;
+    graph_data: GraphDataPoint[];
+}
+
 export enum Tab {
   LEADERBOARD = 'LEADERBOARD',
   STATS = 'STATS', // New feature
   CHAT = 'CHAT',
   SETTINGS = 'SETTINGS'
 }
+

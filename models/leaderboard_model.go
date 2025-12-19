@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"klubRanks/db"
 	"time"
 )
@@ -222,4 +223,60 @@ func GetUserRankInClub(userID, clubID int64) (int, error) {
 	}
 
 	return rank, nil
+}
+
+func CalculatePercentile(userID, clubID int64) (string, error) {
+	var totalMembers int
+	err := db.DB.QueryRow(`SELECT COUNT(*) FROM members WHERE clubid = ?`, clubID).Scan(&totalMembers)
+	if err != nil {
+		return "N/A", err
+	}
+	if totalMembers <= 1 {
+		return "Top 100%", nil
+	}
+
+	rank, err := GetUserRankInClub(userID, clubID)
+	if err != nil {
+		return "N/A", err
+	}
+
+	percentage := (float64(rank) / float64(totalMembers)) * 100
+
+	if percentage <= 1 {
+		return "Top 1%", nil
+	}
+	return fmt.Sprintf("Top %.0f%%", percentage), nil
+}
+
+func GetWeeklyActivity(clubID, userID int64) (map[string]int, error) {
+	query := `
+		SELECT strftime('%Y-%m-%d', timestamp) as day, SUM(points)
+		FROM activity_log
+		WHERE clubid = ? AND userid = ? AND timestamp >= datetime('now', '-7 days')
+		GROUP BY day
+	`
+	rows, err := db.DB.Query(query, clubID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	activity := make(map[string]int)
+	for rows.Next() {
+		var day string
+		var points int
+		rows.Scan(&day, &points)
+		activity[day] = points
+	}
+	return activity, nil
+}
+
+func GetClubLeaderID(clubID int64) int64 {
+	var leaderID int64
+	query := `SELECT userid FROM leaderboard WHERE clubid = ? ORDER BY score DESC LIMIT 1`
+	err := db.DB.QueryRow(query, clubID).Scan(&leaderID)
+	if err != nil {
+		return 0
+	}
+	return leaderID
 }

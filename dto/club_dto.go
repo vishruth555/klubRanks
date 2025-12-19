@@ -34,6 +34,12 @@ type MemberResponse struct {
 	JoinedAt time.Time `json:"joined_at"`
 }
 
+type GraphDataPoint struct {
+	Day    string `json:"name"`   
+	You    int    `json:"You"`    
+	Leader int    `json:"Leader"`
+}
+
 type UserStats struct {
 	UserID   int64  `json:"user_id"`
 	Username string `json:"username"`
@@ -46,4 +52,7 @@ type UserStats struct {
 
 	LastCheckedIn *time.Time `json:"last_checkedin,omitempty"`
 	Rank          int        `json:"rank"`
+
+	Percentile    string           `json:"percentile"`
+	GraphData     []GraphDataPoint `json:"graph_data"`
 }

@@ -125,6 +125,22 @@ func createTables() {
 		panic("could not create streaks table")
 	}
 
+	createActivityLogTable := `
+	CREATE TABLE IF NOT EXISTS activity_log (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	clubid INTEGER NOT NULL,
+	userid INTEGER NOT NULL,
+	points INTEGER NOT NULL,
+	timestamp DATETIME NOT NULL,
+	FOREIGN KEY (clubid) REFERENCES clubs(id) ON DELETE CASCADE,
+	FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
+	);
+	`
+	_, err = DB.Exec(createActivityLogTable)
+	if err != nil {
+		panic("could not create activity_log table")
+	}
+
 	//TODO remove this
 	// createEventsTable := `
 	// CREATE TABLE IF NOT EXISTS events (

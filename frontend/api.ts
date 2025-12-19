@@ -169,6 +169,10 @@ export async function updateLeaderboardScoreApi(
   );
 }
 
+export async function getUserStatsApi(token: string, clubId: string) {
+    return apiFetch<any>(`/clubs/${clubId}/stats/me`, { method: 'GET' }, token);
+}
+
 // -------- Messages --------
 
 export interface BackendClubMessage {
