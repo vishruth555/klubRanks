@@ -50,7 +50,6 @@ func CreateClub(c *gin.Context) {
 	logger.LogInfo("Club created with ID:", club.ID)
 	if err := models.AddUserToLeaderboard(club.CreatedBy, club.ID); err != nil {
 		logger.LogError("Failed to add user to leaderboard:", err)
-		return
 	}
 
 	c.JSON(http.StatusCreated, dto.ClubResponse{
