@@ -191,7 +191,7 @@ func GetMemberCountForClub(clubID int64) (int64, error) {
 	return count, nil
 }
 
-func RemoveMember(userID, clubID int) error {
+func RemoveMember(userID, clubID int64) error {
 	query := `
 	DELETE FROM members
 	WHERE userid = ? AND clubid = ?

@@ -178,6 +178,35 @@ func GetClubMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// NEW FUNCTION: LeaveClub
+// @Summary Leave a club
+// @Tags Clubs
+// @Security BearerAuth
+// @Produce json
+// @Param clubId path int true "Club ID"
+// @Success 200 {object} dto.MessageResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /clubs/{clubId}/members [delete]
+func LeaveClub(c *gin.Context) {
+	clubID, err := strconv.ParseInt(c.Param("clubId"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
+		return
+	}
+
+	userID := c.GetInt64("userId")
+
+	if err := models.RemoveMember(userID, clubID); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.MessageResponse{
+		Message: "left club successfully",
+	})
+}
+
 // GetClubMembers godoc
 // @Summary Get club user stats for current user
 // @Tags Clubs
