@@ -263,7 +263,7 @@ func getClubUserStats(userID int64, clubID int64) (dto.UserStats, error) {
 		return userStats, err
 	}
 
-	logger.LogInfo("Fetching stats for user: ", userID, "in club: ", clubID)
+	logger.LogInfo("Fetching stats for user: ", userID, " in club: ", clubID)
 
 	stats, err := models.GetLeaderboardEntryForUser(userID, clubID)
 	if err != nil {

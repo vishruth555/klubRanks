@@ -30,6 +30,22 @@ func main() {
 	logger.LogInfo("Starting KlubRanks Service...")
 	db.InitDB()
 	server := gin.Default()
+	// server.Use(cors.Default())
+	server.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:3000",
+			"http://192.168.88.18:3000", // if frontend runs here
+		},
+		AllowMethods: []string{
+			"GET", "POST", "PUT", "DELETE", "OPTIONS",
+		},
+		AllowHeaders: []string{
+			"Authorization",
+			"Content-Type",
+		},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// CORS configuration
 	//zp: Updated to AllowAllOrigins for easier development integration
