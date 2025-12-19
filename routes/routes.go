@@ -29,7 +29,7 @@ func RegisterRoutes(server *gin.Engine) {
 	clubs := auth.Group("/clubs")
 	{
 		clubs.POST("", CreateClub)
-		clubs.GET("/", GetMyClubs)
+		clubs.GET("", GetMyClubs)
 		clubs.GET("/:clubId/members", GetClubMembers)
 		clubs.POST("/:clubId/members", AddMember)
 		clubs.GET("/:clubId/stats/me", GetCurrentUserStats)
