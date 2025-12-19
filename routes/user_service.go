@@ -2,9 +2,11 @@ package routes
 
 import (
 	"klubRanks/dto"
+	"klubRanks/logger"
 	"klubRanks/models"
 	"klubRanks/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -68,11 +70,15 @@ func login(context *gin.Context) {
 		AvatarID: req.AvatarID,
 	}
 
+	logger.LogDebug("Attempting login for user: " + user.Username)
+
 	err = user.ValidateCredentials()
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
+
+	logger.LogDebug("User " + user.Username + " authenticated successfully with ID " + strconv.FormatInt(user.ID, 10) + " and AvatarID " + user.AvatarID)
 
 	token, err := utils.GenerateToken(user.Username, user.ID)
 
@@ -81,9 +87,9 @@ func login(context *gin.Context) {
 		return
 	}
 
-    // Return the token AND the user details
+	// Return the token AND the user details
 	context.JSON(http.StatusOK, dto.LoginResponse{
-		Message: "login successful", 
+		Message: "login successful",
 		Token:   token,
 		User: dto.User{
 			ID:       user.ID,

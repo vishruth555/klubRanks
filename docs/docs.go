@@ -286,6 +286,49 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Clubs"
+                ],
+                "summary": "Leave a club",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Club ID",
+                        "name": "clubId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/clubs/{clubId}/messages": {
@@ -589,6 +632,56 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/avatar": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Update user avatar",
+                "parameters": [
+                    {
+                        "description": "Avatar payload",
+                        "name": "avatar",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateAvatarRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -658,6 +751,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GraphDataPoint": {
+            "type": "object",
+            "properties": {
+                "Leader": {
+                    "type": "integer"
+                },
+                "You": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.LeaderboardEntryResponse": {
             "type": "object",
             "properties": {
@@ -705,6 +812,9 @@ const docTemplate = `{
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
                 }
             }
         },
@@ -763,6 +873,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.UpdateAvatarRequest": {
+            "type": "object",
+            "required": [
+                "avatar_id"
+            ],
+            "properties": {
+                "avatar_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.User": {
             "type": "object",
             "properties": {
@@ -786,11 +907,20 @@ const docTemplate = `{
                 "current_streak": {
                     "type": "integer"
                 },
+                "graph_data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GraphDataPoint"
+                    }
+                },
                 "last_checkedin": {
                     "type": "string"
                 },
                 "longest_streak": {
                     "type": "integer"
+                },
+                "percentile": {
+                    "type": "string"
                 },
                 "rank": {
                     "type": "integer"

@@ -47,8 +47,8 @@ func GetUserByID(id int64) (*User, error) {
 
 func (u *User) Save() error {
 	query := `
-	INSERT INTO users (username, password, avatar_id, created_at)
-	VALUES (?, ?, ?, ?)
+	INSERT INTO users (username, password, created_at)
+	VALUES (?, ?, ?)
 	`
 
 	stmt, err := db.DB.Prepare(query)
@@ -67,7 +67,6 @@ func (u *User) Save() error {
 	result, err := stmt.Exec(
 		u.Username,
 		hashedPassword,
-		u.AvatarID,
 		now,
 	)
 	if err != nil {
@@ -87,7 +86,7 @@ func (u *User) Save() error {
 
 func (u *User) ValidateCredentials() error {
 	query := `
-	SELECT id, password
+	SELECT id, password, COALESCE(NULLIF(avatar_id, ''), 'default')
 	FROM users
 	WHERE username = ?
 	`
@@ -95,13 +94,14 @@ func (u *User) ValidateCredentials() error {
 	row := db.DB.QueryRow(query, u.Username)
 
 	var hashedPassword string
-	err := row.Scan(&u.ID, &hashedPassword)
+	err := row.Scan(&u.ID, &hashedPassword, &u.AvatarID)
+	//TODO remove detailed error messages
 	if err != nil {
-		return errors.New("invalid credentials")
+		return errors.New("invalid credentials" + err.Error())
 	}
 
 	if !utils.CheckPasswordHash(u.Password, hashedPassword) {
-		return errors.New("invalid credentials")
+		return errors.New("invalid credentials" + err.Error())
 	}
 
 	return nil

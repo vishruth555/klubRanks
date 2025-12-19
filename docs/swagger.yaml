@@ -43,6 +43,15 @@ definitions:
         example: could not parse data
         type: string
     type: object
+  dto.GraphDataPoint:
+    properties:
+      Leader:
+        type: integer
+      You:
+        type: integer
+      name:
+        type: string
+    type: object
   dto.LeaderboardEntryResponse:
     properties:
       current_streak:
@@ -76,6 +85,8 @@ definitions:
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
+      user:
+        $ref: '#/definitions/dto.User'
     type: object
   dto.MemberResponse:
     properties:
@@ -114,6 +125,13 @@ definitions:
     - password
     - username
     type: object
+  dto.UpdateAvatarRequest:
+    properties:
+      avatar_id:
+        type: string
+    required:
+    - avatar_id
+    type: object
   dto.User:
     properties:
       avatar_id:
@@ -129,10 +147,16 @@ definitions:
         type: string
       current_streak:
         type: integer
+      graph_data:
+        items:
+          $ref: '#/definitions/dto.GraphDataPoint'
+        type: array
       last_checkedin:
         type: string
       longest_streak:
         type: integer
+      percentile:
+        type: string
       rank:
         type: integer
       score:
@@ -266,6 +290,33 @@ paths:
       tags:
       - Leaderboard
   /clubs/{clubId}/members:
+    delete:
+      parameters:
+      - description: Club ID
+        in: path
+        name: clubId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Leave a club
+      tags:
+      - Clubs
     get:
       parameters:
       - description: Club ID
@@ -512,6 +563,37 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Create a new user
+      tags:
+      - Auth
+  /users/avatar:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Avatar payload
+        in: body
+        name: avatar
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateAvatarRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user avatar
       tags:
       - Auth
 securityDefinitions:
