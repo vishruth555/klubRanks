@@ -6,9 +6,11 @@ import (
 	"klubRanks/logger"
 	"klubRanks/routes"
 	"net/http"
+	"time"
 
 	_ "klubRanks/docs"
 
+	"github.com/gin-contrib/cors"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -29,6 +31,17 @@ func main() {
 	db.InitDB()
 	server := gin.Default()
 
+	// CORS configuration
+	//zp: Updated to AllowAllOrigins for easier development integration
+	server.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	server.GET("/ping", ping)
@@ -37,7 +50,6 @@ func main() {
 	routes.RegisterRoutes(server)
 
 	server.Run(":" + config.AppConfig.Server.Port)
-
 }
 
 func ping(context *gin.Context) {
