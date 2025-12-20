@@ -110,6 +110,9 @@ func getClubByID(clubID uint) (*Club, error) {
 
 func AddMember(userID uint, clubCode string, role string) error {
 	club, err := getClubByCode(clubCode)
+	if isMember, _ := IsUserMemberOfClub(userID, club.ID); isMember {
+		return errors.New("user is already a member of the club")
+	}
 	if err != nil {
 		return errors.New("club not found")
 	}
@@ -127,6 +130,17 @@ func AddMember(userID uint, clubCode string, role string) error {
 	AddActivityLog(userID, club.ID, 0, ActionJoin)
 
 	return AddUserToLeaderboard(userID, club.ID)
+}
+
+func IsUserMemberOfClub(userID, clubID uint) (bool, error) {
+	var count int64
+
+	err := db.DB.
+		Model(&Member{}).
+		Where("user_id = ? AND club_id = ?", userID, clubID).
+		Count(&count).Error
+
+	return count > 0, err
 }
 
 func GetClubsForUser(userID uint) ([]Club, error) {
