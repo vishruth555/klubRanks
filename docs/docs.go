@@ -711,12 +711,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "code": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "created_at": {
                     "type": "string"
                 },
                 "created_by": {
+                    "type": "integer"
+                },
+                "current_rank": {
                     "type": "integer"
                 },
                 "description": {
