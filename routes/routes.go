@@ -32,6 +32,7 @@ func RegisterRoutes(server *gin.Engine) {
 	{
 		clubs.POST("", CreateClub)
 		clubs.GET("", GetMyClubs)
+		clubs.PUT("/:clubId", UpdateClub)
 		clubs.GET("/:clubId/members", GetClubMembers)
 		clubs.POST("/:clubId/members", AddMember)
 		clubs.DELETE("/:clubId/members", LeaveClub)

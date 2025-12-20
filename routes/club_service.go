@@ -67,6 +67,67 @@ func CreateClub(c *gin.Context) {
 	})
 }
 
+// UpdateClub godoc
+// @Summary Update club details
+// @Tags Clubs
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param clubId path int true "Club ID"
+// @Param club body dto.UpdateClubRequest true "Update club payload"
+// @Success 200 {object} dto.ClubResponse
+// @Failure 400, 403, 404, 500 {object} dto.ErrorResponse
+// @Router /clubs/{clubId} [put]
+func UpdateClub(c *gin.Context) {
+	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
+		return
+	}
+
+	var req dto.UpdateClubRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid request body"})
+		return
+	}
+
+	userID := c.GetUint("userId")
+
+	// Verify ownership
+	club, err := models.GetClub(uint(clubID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "club not found"})
+		return
+	}
+
+	if club.CreatedBy != userID {
+		c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "only the creator can edit this club"})
+		return
+	}
+
+	// Update fields
+	club.Name = req.Name
+	club.Description = req.Description
+	club.IsPrivate = req.IsPrivate
+	club.Action = req.Action
+
+	if err := club.Update(); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ClubResponse{
+		ID:          club.ID,
+		Name:        club.Name,
+		Description: club.Description,
+		Code:        club.Code,
+		Action:      club.Action,
+		IsPrivate:   club.IsPrivate,
+		CreatedBy:   club.CreatedBy,
+		CreatedAt:   club.CreatedAt,
+	})
+}
+
 // GetMyClubs godoc
 // @Summary Get user's clubs
 // @Description Get all clubs the user is a member of

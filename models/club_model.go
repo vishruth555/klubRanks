@@ -108,6 +108,11 @@ func getClubByID(clubID uint) (*Club, error) {
 	return &club, nil
 }
 
+// Public wrapper for service layer
+func GetClub(clubID uint) (*Club, error) {
+	return getClubByID(clubID)
+}
+
 func AddMember(userID uint, clubCode string, role string) error {
 	club, err := getClubByCode(clubCode)
 	if isMember, _ := IsUserMemberOfClub(userID, club.ID); isMember {
