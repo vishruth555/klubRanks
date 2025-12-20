@@ -24,10 +24,11 @@ type ClubResponse struct {
 	ID              uint      `json:"id"`
 	Name            string    `json:"name"`
 	Description     *string   `json:"description,omitempty"`
-	Code            int       `json:"code"`
+	Code            string    `json:"code"`
 	Action          string    `json:"action"`
 	IsPrivate       bool      `json:"is_private"`
 	NumberOfMembers int       `json:"number_of_members"`
+	CurrentRank     int       `json:"current_rank"`
 	CreatedBy       uint      `json:"created_by"`
 	CreatedAt       time.Time `json:"created_at"`
 }

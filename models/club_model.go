@@ -2,9 +2,10 @@ package models
 
 import (
 	"crypto/sha256"
-	"encoding/binary"
+	"encoding/base32"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"klubRanks/db"
@@ -17,7 +18,7 @@ type Club struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	CreatedBy   uint      `gorm:"not null" json:"created_by"`
 	IsPrivate   bool      `json:"is_private"`
-	Code        int       `gorm:"not null" json:"code"`
+	Code        string    `gorm:"not null" json:"code"`
 	Name        string    `gorm:"not null" json:"name"`
 	Description *string   `json:"description,omitempty"`
 	Action      string    `gorm:"not null" json:"action"`
@@ -59,18 +60,20 @@ func (c *Club) Save() error {
 }
 
 func (c *Club) GenerateCode() {
-	// derive stable hash from club ID
-	hash := sha256.Sum256([]byte(fmt.Sprintf("%d", c.ID)))
+	// Use nanosecond timestamp for uniqueness
+	payload := fmt.Sprintf("%d", c.CreatedAt.UnixNano())
 
-	// convert first 4 bytes to number
-	num := binary.BigEndian.Uint32(hash[:4])
+	hash := sha256.Sum256([]byte(payload))
 
-	// force into 6-digit range
-	c.Code = int(num%900000) + 100000
-	logger.LogDebug("Generated club code:", c.Code, "for club ID:", c.ID)
+	c.Code = strings.ToUpper(
+		base32.StdEncoding.WithPadding(base32.NoPadding).
+			EncodeToString(hash[:5]),
+	)
+
+	logger.LogDebug("Generated code", c.Code, "at", c.CreatedAt)
 }
 
-func getClubByCode(clubCode int) (*Club, error) {
+func getClubByCode(clubCode string) (*Club, error) {
 	var club Club
 
 	err := db.DB.
@@ -105,7 +108,7 @@ func getClubByID(clubID uint) (*Club, error) {
 	return &club, nil
 }
 
-func AddMember(userID uint, clubCode int, role string) error {
+func AddMember(userID uint, clubCode string, role string) error {
 	club, err := getClubByCode(clubCode)
 	if err != nil {
 		return errors.New("club not found")

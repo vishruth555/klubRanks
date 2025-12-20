@@ -90,6 +90,7 @@ func GetMyClubs(c *gin.Context) {
 	resp := make([]dto.ClubResponse, 0, len(clubs))
 	for _, club := range clubs {
 		numberOfMembers, err := models.GetMemberCountForClub(club.ID)
+		rank, err := models.GetUserRankInClub(userID, club.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 				Error: err.Error(),
@@ -105,6 +106,7 @@ func GetMyClubs(c *gin.Context) {
 			Action:          club.Action,
 			IsPrivate:       club.IsPrivate,
 			NumberOfMembers: int(numberOfMembers),
+			CurrentRank:     rank,
 			CreatedBy:       club.CreatedBy,
 			CreatedAt:       club.CreatedAt,
 		})
@@ -125,11 +127,7 @@ func GetMyClubs(c *gin.Context) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubCode}/members [post]
 func AddMember(c *gin.Context) {
-	clubCode, err := strconv.Atoi(c.Param("clubId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
-		return
-	}
+	clubCode := c.Param("clubId")
 
 	userID := c.GetUint("userId")
 	role := "member"
