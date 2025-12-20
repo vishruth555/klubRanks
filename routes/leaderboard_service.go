@@ -95,6 +95,7 @@ func GetLeaderboard(c *gin.Context) {
 				AvatarID: user.AvatarID,
 			},
 			CurrentStreak: e.CurrentStreak,
+			LongestStreak: e.LongestStreak,
 			Score:         e.Score,
 			LastCheckedIn: e.LastCheckedIn,
 		})

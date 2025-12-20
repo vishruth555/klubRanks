@@ -18,5 +18,6 @@ type LeaderboardEntryResponse struct {
 	User          User       `json:"user"`
 	Score         int        `json:"score"`
 	CurrentStreak int        `json:"current_streak"`
+	LongestStreak int        `json:"longest_streak"`
 	LastCheckedIn *time.Time `json:"last_checkedin,omitempty"`
 }
