@@ -1,9 +1,14 @@
 package models
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
+	"errors"
+	"fmt"
 	"time"
 
 	"klubRanks/db"
+	"klubRanks/logger"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +17,7 @@ type Club struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	CreatedBy   uint      `gorm:"not null" json:"created_by"`
 	IsPrivate   bool      `json:"is_private"`
+	Code        int       `gorm:"not null" json:"code"`
 	Name        string    `gorm:"not null" json:"name"`
 	Description *string   `json:"description,omitempty"`
 	Action      string    `gorm:"not null" json:"action"`
@@ -31,6 +37,7 @@ type Member struct {
 func (c *Club) Save() error {
 	return db.DB.Transaction(func(tx *gorm.DB) error {
 		c.CreatedAt = time.Now()
+		c.GenerateCode()
 
 		if err := tx.Create(c).Error; err != nil {
 			return err
@@ -49,6 +56,30 @@ func (c *Club) Save() error {
 
 		return nil
 	})
+}
+
+func (c *Club) GenerateCode() {
+	// derive stable hash from club ID
+	hash := sha256.Sum256([]byte(fmt.Sprintf("%d", c.ID)))
+
+	// convert first 4 bytes to number
+	num := binary.BigEndian.Uint32(hash[:4])
+
+	// force into 6-digit range
+	c.Code = int(num%900000) + 100000
+	logger.LogDebug("Generated club code:", c.Code, "for club ID:", c.ID)
+}
+
+func getClubByCode(clubCode int) (*Club, error) {
+	var club Club
+
+	err := db.DB.
+		Where("code = ?", clubCode).
+		First(&club).Error
+	if err != nil {
+		return nil, err
+	}
+	return &club, nil
 }
 
 func (c *Club) Update() error {
@@ -74,10 +105,14 @@ func getClubByID(clubID uint) (*Club, error) {
 	return &club, nil
 }
 
-func AddMember(userID, clubID uint, role string) error {
+func AddMember(userID uint, clubCode int, role string) error {
+	club, err := getClubByCode(clubCode)
+	if err != nil {
+		return errors.New("club not found")
+	}
 	member := Member{
 		UserID:   userID,
-		ClubID:   clubID,
+		ClubID:   club.ID,
 		Role:     role,
 		JoinedAt: time.Now(),
 	}
@@ -86,9 +121,9 @@ func AddMember(userID, clubID uint, role string) error {
 		return err
 	}
 
-	AddActivityLog(userID, clubID, 0, ActionJoin)
+	AddActivityLog(userID, club.ID, 0, ActionJoin)
 
-	return AddUserToLeaderboard(userID, clubID)
+	return AddUserToLeaderboard(userID, club.ID)
 }
 
 func GetClubsForUser(userID uint) ([]Club, error) {

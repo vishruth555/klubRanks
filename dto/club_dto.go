@@ -24,6 +24,7 @@ type ClubResponse struct {
 	ID              uint      `json:"id"`
 	Name            string    `json:"name"`
 	Description     *string   `json:"description,omitempty"`
+	Code            int       `json:"code"`
 	Action          string    `json:"action"`
 	IsPrivate       bool      `json:"is_private"`
 	NumberOfMembers int       `json:"number_of_members"`

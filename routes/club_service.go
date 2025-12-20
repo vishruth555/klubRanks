@@ -58,6 +58,7 @@ func CreateClub(c *gin.Context) {
 		ID:              club.ID,
 		Name:            club.Name,
 		Description:     club.Description,
+		Code:            club.Code,
 		IsPrivate:       club.IsPrivate,
 		Action:          club.Action,
 		NumberOfMembers: 1,
@@ -100,6 +101,8 @@ func GetMyClubs(c *gin.Context) {
 			ID:              club.ID,
 			Name:            club.Name,
 			Description:     club.Description,
+			Code:            club.Code,
+			Action:          club.Action,
 			IsPrivate:       club.IsPrivate,
 			NumberOfMembers: int(numberOfMembers),
 			CreatedBy:       club.CreatedBy,
@@ -116,13 +119,13 @@ func GetMyClubs(c *gin.Context) {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param clubId path int true "Club ID"
+// @Param clubCode path int true "Club Code"
 // @Success 200 {object} dto.MessageResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /clubs/{clubId}/members [post]
+// @Router /clubs/{clubCode}/members [post]
 func AddMember(c *gin.Context) {
-	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
+	clubCode, err := strconv.Atoi(c.Param("clubId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid club id"})
 		return
@@ -131,11 +134,11 @@ func AddMember(c *gin.Context) {
 	userID := c.GetUint("userId")
 	role := "member"
 
-	if err := models.AddMember(userID, uint(clubID), role); err != nil {
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
+	if err := models.AddMember(userID, clubCode, role); err != nil {
+		c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
-	logger.LogInfo("User", userID, "added to club", clubID)
+	logger.LogInfo("User", userID, "added to club", clubCode)
 
 	c.JSON(http.StatusOK, dto.MessageResponse{
 		Message: "member added successfully",

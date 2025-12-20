@@ -98,6 +98,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/clubs/{clubCode}/members": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Clubs"
+                ],
+                "summary": "Add member to club",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Club Code",
+                        "name": "clubCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/clubs/{clubId}/leaderboard": {
             "get": {
                 "security": [
@@ -231,52 +279,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/dto.MemberResponse"
                             }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Clubs"
-                ],
-                "summary": "Add member to club",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Club ID",
-                        "name": "clubId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.MessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
@@ -707,6 +709,9 @@ const docTemplate = `{
             "properties": {
                 "action": {
                     "type": "string"
+                },
+                "code": {
+                    "type": "integer"
                 },
                 "created_at": {
                     "type": "string"
