@@ -34,7 +34,7 @@ func RegisterRoutes(server *gin.Engine) {
 		clubs.GET("", GetMyClubs)
 		clubs.PUT("/:clubId", UpdateClub)
 		clubs.GET("/:clubId/members", GetClubMembers)
-		clubs.POST("/:clubId/members", AddMember)
+		clubs.POST("/join/:code", JoinClub)
 		clubs.DELETE("/:clubId/members", LeaveClub)
 		clubs.GET("/:clubId/stats/me", GetCurrentUserStats)
 		clubs.GET("/:clubId/stats/:userId", GetUserStats)

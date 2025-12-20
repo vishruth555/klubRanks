@@ -176,19 +176,19 @@ func GetMyClubs(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// AddMember godoc
-// @Summary Add member to club
+// JoinClub godoc (Renamed from AddMember)
+// @Summary Join a club using invite code
 // @Tags Clubs
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param clubCode path int true "Club Code"
+// @Param code path string true "Club Invite Code"
 // @Success 200 {object} dto.MessageResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /clubs/{clubCode}/members [post]
-func AddMember(c *gin.Context) {
-	clubCode := c.Param("clubId")
+// @Router /clubs/join/{code} [post]
+func JoinClub(c *gin.Context) {
+	clubCode := c.Param("code") // Changed from clubId to code
 
 	userID := c.GetUint("userId")
 	role := "member"
@@ -197,10 +197,10 @@ func AddMember(c *gin.Context) {
 		c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
-	logger.LogInfo("User", userID, "added to club", clubCode)
+	logger.LogInfo("User", userID, "joined club with code", clubCode)
 
 	c.JSON(http.StatusOK, dto.MessageResponse{
-		Message: "member added successfully",
+		Message: "joined club successfully",
 	})
 }
 
