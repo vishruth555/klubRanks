@@ -21,16 +21,18 @@ type UpdateClubRequest struct {
 /*************** RESPONSE DTOs ***************/
 
 type ClubResponse struct {
-	ID              uint      `json:"id"`
-	Name            string    `json:"name"`
-	Description     *string   `json:"description,omitempty"`
-	Code            string    `json:"code"`
-	Action          string    `json:"action"`
-	IsPrivate       bool      `json:"is_private"`
-	NumberOfMembers int       `json:"number_of_members"`
-	CurrentRank     int       `json:"current_rank"`
-	CreatedBy       uint      `json:"created_by"`
-	CreatedAt       time.Time `json:"created_at"`
+	ID              uint       `json:"id"`
+	Name            string     `json:"name"`
+	Description     *string    `json:"description,omitempty"`
+	Code            string     `json:"code"`
+	Action          string     `json:"action"`
+	IsPrivate       bool       `json:"is_private"`
+	NumberOfMembers int        `json:"number_of_members"`
+	CurrentRank     int        `json:"current_rank"`
+	LastCheckedIn   *time.Time `json:"last_checkedin,omitempty"`
+	NextCheckIn     *time.Time `json:"next_checkin,omitempty"`
+	CreatedBy       uint       `json:"created_by"`
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 type MemberResponse struct {
@@ -55,7 +57,6 @@ type UserStats struct {
 	LongestStreak int `json:"longest_streak"`
 
 	LastCheckedIn *time.Time `json:"last_checkedin,omitempty"`
-	NextCheckIn   *time.Time `json:"next_checkin,omitempty"`
 	Rank          int        `json:"rank"`
 
 	GraphData []GraphDataPoint `json:"graph_data"`

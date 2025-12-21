@@ -152,11 +152,17 @@ func GetMyClubs(c *gin.Context) {
 	for _, club := range clubs {
 		numberOfMembers, err := models.GetMemberCountForClub(club.ID)
 		rank, err := models.GetUserRankInClub(userID, club.ID)
+		stats, err := models.GetLeaderboardEntryForUser(userID, club.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 				Error: err.Error(),
 			})
 			return
+		}
+		var nextCheckIn *time.Time
+		if stats.LastCheckedIn != nil {
+			t := stats.LastCheckedIn.Add(5 * time.Minute)
+			nextCheckIn = &t
 		}
 
 		resp = append(resp, dto.ClubResponse{
@@ -167,6 +173,8 @@ func GetMyClubs(c *gin.Context) {
 			Action:          club.Action,
 			IsPrivate:       club.IsPrivate,
 			NumberOfMembers: int(numberOfMembers),
+			LastCheckedIn:   stats.LastCheckedIn,
+			NextCheckIn:     nextCheckIn,
 			CurrentRank:     rank,
 			CreatedBy:       club.CreatedBy,
 			CreatedAt:       club.CreatedAt,
@@ -358,13 +366,6 @@ func getClubUserStats(userID uint, clubID uint) (dto.UserStats, error) {
 		})
 	}
 
-	var nextCheckIn *time.Time
-
-	if stats.LastCheckedIn != nil {
-		t := stats.LastCheckedIn.Add(5 * time.Minute)
-		nextCheckIn = &t
-	}
-
 	userStats = dto.UserStats{
 		UserID:        user.ID,
 		Username:      user.Username,
@@ -373,7 +374,6 @@ func getClubUserStats(userID uint, clubID uint) (dto.UserStats, error) {
 		CurrentStreak: stats.CurrentStreak,
 		LongestStreak: stats.LongestStreak,
 		LastCheckedIn: stats.LastCheckedIn,
-		NextCheckIn:   nextCheckIn,
 		Rank:          rank,
 		GraphData:     graphData,
 	}
