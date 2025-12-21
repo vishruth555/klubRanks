@@ -26,7 +26,7 @@ func (ActivityLog) TableName() string {
 }
 
 const (
-	ActionJoin   = "join"
+	ActionJoin   = "joined"
 	ActionLeave  = "left"
 	ActionUpdate = "update"
 )
@@ -42,7 +42,7 @@ func AddActivityLog(userID, clubID uint, updatedScore int, action string) error 
 		message := Message{
 			UserID:    userID,
 			ClubID:    clubID,
-			Message:   fmt.Sprintf("%s has %s the club.", user.Username, action),
+			Message:   fmt.Sprintf("%s has %s %s.", user.Username, action, club.Name),
 			Timestamp: time.Now(),
 			Type:      MessageTypeSystem,
 		}

@@ -125,44 +125,6 @@ func AddMember(userID uint, clubCode string, role string) error {
 	if count > 0 {
 		return errors.New("user is already a member of the club")
 	}
-	// check if this change is required to fix the "join back" issue
-	// 	// Use Transaction to ensure both Member and Leaderboard entry are created, or neither
-	// 	return db.DB.Transaction(func(tx *gorm.DB) error {
-	// 		member := Member{
-	// 			UserID:   userID,
-	// 			ClubID:   club.ID,
-	// 			Role:     role,
-	// 			JoinedAt: time.Now(),
-	// 		}
-
-	// 		if err := tx.Create(&member).Error; err != nil {
-	// 			return err
-	// 		}
-
-	// 		// We assume AddActivityLog handles its own transaction or is safe to call here.
-	// 		// Ideally, we'd pass 'tx' to it, but for now we call it outside or assume it's fine.
-	// 		// To be strictly correct with GORM transactions, DB writes inside should use 'tx'.
-	// 		// Since we can't easily change AddActivityLog signature here without seeing it,
-	// 		// we will focus on the Member/Leaderboard consistency.
-
-	// 		// Note: AddUserToLeaderboard uses db.DB, so it's outside this transaction scope
-	// 		// unless we modify it to accept tx.
-	// 		// To fix the "join back" issue specifically, the critical part is RemoveMember cleaning up.
-	// 		// However, preventing partial state here is good practice.
-
-	// 		// For this specific fix, we'll keep it simple: if AddUserToLeaderboard fails,
-	// 		// we return error, triggering rollback of 'member'.
-	// 		// BUT AddUserToLeaderboard uses global db.DB, so it won't join this tx automatically.
-	// 		// The PROPER fix for "re-join" is in RemoveMember (see below).
-
-	// 		if err := AddUserToLeaderboard(userID, club.ID); err != nil {
-	// 			return err
-	// 		}
-
-	// 		AddActivityLog(userID, club.ID, 0, ActionJoin)
-	// 		return nil
-	// 	})
-	// }
 	member := Member{
 		UserID:   userID,
 		ClubID:   club.ID,
@@ -177,17 +139,6 @@ func AddMember(userID uint, clubCode string, role string) error {
 	AddActivityLog(userID, club.ID, 0, ActionJoin)
 
 	return AddUserToLeaderboard(userID, club.ID)
-}
-
-func IsUserMemberOfClub(userID, clubID uint) (bool, error) {
-	var count int64
-
-	err := db.DB.
-		Model(&Member{}).
-		Where("user_id = ? AND club_id = ?", userID, clubID).
-		Count(&count).Error
-
-	return count > 0, err
 }
 
 func GetClubsForUser(userID uint) ([]Club, error) {
@@ -220,7 +171,7 @@ func RemoveMember(userID, clubID uint) error {
 		if err := tx.Where("user_id = ? AND club_id = ?", userID, clubID).Delete(&Member{}).Error; err != nil {
 			return err
 		}
-		// 2. Delete from Leaderboard (Fix for re-joining issue)
+		// 2. Delete from Leaderboard
 		// This ensures that when they join back, they don't hit a unique constraint error
 		if err := tx.Where("user_id = ? AND club_id = ?", userID, clubID).Delete(&LeaderboardEntry{}).Error; err != nil {
 			return err
