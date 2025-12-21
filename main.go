@@ -64,10 +64,19 @@ func health(context *gin.Context) {
 
 func enableCORS(server *gin.Engine) {
 	server.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowOrigins: []string{
+			"http://localhost:3000",
+			"https://club-ranks.vercel.app",
+		},
+		AllowMethods: []string{
+			"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS",
+		},
+		AllowHeaders: []string{
+			"Origin", "Content-Type", "Authorization",
+		},
+		ExposeHeaders: []string{
+			"Content-Length",
+		},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
