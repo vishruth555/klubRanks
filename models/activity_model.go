@@ -112,6 +112,7 @@ func GetDailyScoresForClub(
 	}
 
 	result := make(map[string]int)
+	result["You"] = 0 // Default value if current user has no activity
 
 	for userID, score := range selected {
 		if userID == currentUserID {
