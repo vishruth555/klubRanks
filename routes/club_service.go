@@ -76,7 +76,10 @@ func CreateClub(c *gin.Context) {
 // @Param clubId path int true "Club ID"
 // @Param club body dto.UpdateClubRequest true "Update club payload"
 // @Success 200 {object} dto.ClubResponse
-// @Failure 400, 403, 404, 500 {object} dto.ErrorResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
 // @Router /clubs/{clubId} [put]
 func UpdateClub(c *gin.Context) {
 	clubID, err := strconv.ParseUint(c.Param("clubId"), 10, 64)
