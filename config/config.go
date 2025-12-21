@@ -12,9 +12,10 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port    string
-	Log     string
-	Counter int
+	Port            string
+	Log             string
+	Counter         int
+	CoolDownMinutes int
 	// ReadTimeout  time.Duration
 	// WriteTimeout time.Duration
 }
@@ -34,9 +35,10 @@ var AppConfig Config
 func Load() {
 	AppConfig = Config{
 		Server: ServerConfig{
-			Port:    getEnv("SERVER_PORT", "8080"),
-			Log:     getEnv("LOG_LEVEL", "info"),
-			Counter: 1,
+			Port:            getEnv("SERVER_PORT", "8080"),
+			Log:             getEnv("LOG_LEVEL", "info"),
+			Counter:         1,
+			CoolDownMinutes: 1,
 		},
 		Database: DatabaseConfig{
 			Driver: getEnv("DB_DRIVER", "sqlite3"),

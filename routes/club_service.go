@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"klubRanks/config"
 	"klubRanks/dto"
 	"klubRanks/logger"
 	"klubRanks/models"
@@ -164,7 +165,7 @@ func GetMyClubs(c *gin.Context) {
 		}
 		var nextCheckIn *time.Time
 		if stats.LastCheckedIn != nil {
-			t := stats.LastCheckedIn.Add(5 * time.Minute)
+			t := stats.LastCheckedIn.Add(time.Duration(config.AppConfig.Server.CoolDownMinutes) * time.Minute)
 			nextCheckIn = &t
 		}
 
