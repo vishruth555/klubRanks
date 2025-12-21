@@ -6,6 +6,7 @@ import (
 	"klubRanks/logger"
 	"klubRanks/models"
 	"klubRanks/routes"
+	"net"
 	"net/http"
 	"time"
 
@@ -35,6 +36,8 @@ func main() {
 	config.Load()
 
 	logger.LogDebug("Loaded configuration:", config.AppConfig)
+
+	net.DefaultResolver.PreferGo = true
 
 	db.InitDB()
 	createTables()
