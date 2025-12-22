@@ -759,8 +759,14 @@ const docTemplate = `{
         "dto.ClubMessageResponse": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "message": {
                     "type": "string"
+                },
+                "reply_to": {
+                    "$ref": "#/definitions/dto.ReplyInfo"
                 },
                 "timestamp": {
                     "type": "string"
@@ -937,6 +943,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReplyInfo": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
         "dto.SendMessageRequest": {
             "type": "object",
             "required": [
@@ -945,6 +962,9 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                },
+                "reply_to_id": {
+                    "type": "integer"
                 }
             }
         },

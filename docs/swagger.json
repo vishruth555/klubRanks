@@ -752,8 +752,14 @@
         "dto.ClubMessageResponse": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "message": {
                     "type": "string"
+                },
+                "reply_to": {
+                    "$ref": "#/definitions/dto.ReplyInfo"
                 },
                 "timestamp": {
                     "type": "string"
@@ -930,6 +936,17 @@
                 }
             }
         },
+        "dto.ReplyInfo": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
         "dto.SendMessageRequest": {
             "type": "object",
             "required": [
@@ -938,6 +955,9 @@
             "properties": {
                 "message": {
                     "type": "string"
+                },
+                "reply_to_id": {
+                    "type": "integer"
                 }
             }
         },
