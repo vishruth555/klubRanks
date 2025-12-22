@@ -42,10 +42,11 @@ func SendMessage(c *gin.Context) {
 	userID := c.GetUint("userId")
 
 	msg := models.Message{
-		ClubID:  uint(clubID),
-		UserID:  userID,
-		Message: req.Message,
-		Type:    models.MessageTypeUser,
+		ClubID:    uint(clubID),
+		UserID:    userID,
+		Message:   req.Message,
+		Type:      models.MessageTypeUser,
+		ReplyToID: req.ReplyToID,
 	}
 
 	if err := msg.AddMessage(); err != nil {
@@ -104,6 +105,25 @@ func GetClubMessages(c *gin.Context) {
 	}
 
 	resp := make([]dto.ClubMessageResponse, 0, len(messages))
+	// for _, m := range messages {
+	// 	user, err := models.GetUserByID(m.UserID)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+	// 			Error: err.Error(),
+	// 		})
+	// 		return
+	// 	}
+	// 	resp = append(resp, dto.ClubMessageResponse{
+	// 		User: dto.User{
+	// 			ID:       user.ID,
+	// 			Username: user.Username,
+	// 			AvatarID: user.AvatarID,
+	// 		},
+	// 		Type:      m.Type,
+	// 		Message:   m.Message,
+	// 		Timestamp: m.Timestamp,
+	// 	})
+	// }
 	for _, m := range messages {
 		user, err := models.GetUserByID(m.UserID)
 		if err != nil {
@@ -112,15 +132,38 @@ func GetClubMessages(c *gin.Context) {
 			})
 			return
 		}
+		userDto := dto.User{
+			ID:       user.ID, // Uses preloaded User
+			Username: user.Username,
+			AvatarID: user.AvatarID,
+		}
+
+		var replyToDto *dto.ReplyInfo
+		if m.ReplyTo != nil {
+			replyToUser, err := models.GetUserByID(m.ReplyTo.UserID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+					Error: err.Error(),
+				})
+				return
+			}
+			replyToDto = &dto.ReplyInfo{
+				User: dto.User{
+					ID:       replyToUser.ID,
+					Username: replyToUser.Username,
+					AvatarID: replyToUser.AvatarID,
+				},
+				Message: m.ReplyTo.Message,
+			}
+		}
+
 		resp = append(resp, dto.ClubMessageResponse{
-			User: dto.User{
-				ID:       user.ID,
-				Username: user.Username,
-				AvatarID: user.AvatarID,
-			},
+			ID:        m.ID,
+			User:      userDto,
 			Type:      m.Type,
 			Message:   m.Message,
 			Timestamp: m.Timestamp,
+			ReplyTo:   replyToDto,
 		})
 	}
 
